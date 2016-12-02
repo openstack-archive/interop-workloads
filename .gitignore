@@ -1,0 +1,32 @@
+AUTHORS
+build/*
+build-stamp
+ChangeLog
+cover/
+covhtml/
+dist/
+doc/build
+etc/*.sample
+*.DS_Store
+*.pyc
+interop_workloads.egg-info/
+pbr*.egg/
+setuptools*.egg/
+*.log
+*.mo
+*.sw?
+*~
+/.*
+!/.coveragerc
+!/.gitignore
+!/.gitreview
+!/.mailmap
+!/.pylintrc
+!/.testr.conf
+
+# Files created by releasenotes build
+releasenotes/build
+
+    Contact GitHub API Training Shop Blog About 
+
+
