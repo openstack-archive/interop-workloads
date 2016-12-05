@@ -19,7 +19,7 @@ then you can run docker commands against the swarm
 
     apt-get update
     apt-get -y install docker.io
-    ln -sf /usr/bin/docker.io /usr/local/bin/docker
+    ln -sf /usr/bin/docker.io /usr/local/bin/docker  
 
 ## Ansible
 
