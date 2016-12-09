@@ -3,3 +3,5 @@
 # process, which may cause wedges in the gate later.
 
 pbr>=1.8 # Apache-2.0
+ansible>=2.0.0.0 # GNU LGPL 3.0
+shade==1.13.2 # Apache-2.0
