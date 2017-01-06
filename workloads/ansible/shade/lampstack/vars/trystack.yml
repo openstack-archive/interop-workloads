@@ -25,6 +25,7 @@ auth: {
 }
 
 app_env: {
+  target_os: "ubuntu",
   ssh_user: "ubuntu",
   image_name: "ubuntu1404",
   region_name: "regionOne",
@@ -35,7 +36,5 @@ app_env: {
   public_key_file: "/root/.ssh/id_rsa.pub",
   stack_size: 4,
   volume_size: 2,
-  block_device_name: "/dev/vdb",
-  wp_theme: "https://downloads.wordpress.org/theme/iribbon.2.0.65.zip",
-  wp_posts: "http://wpcandy.s3.amazonaws.com/resources/postsxml.zip"
+  block_device_name: "/dev/vdb"
 }

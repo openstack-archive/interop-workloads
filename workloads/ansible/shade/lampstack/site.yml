@@ -6,18 +6,22 @@
     - "vars/{{ env }}.yml"
   roles:
     - "{{ action }}"
+  tags: "{{ action }}"
 
 - name: Install python2 for ansible to work
-  hosts: dbservers, webservers, balancers, wps
+  hosts: dbservers, webservers, balancers
   gather_facts: false
   user: "{{ app_env.ssh_user }}"
   become: true
   become_user: root
   vars_files:
     - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/common/tasks/{{ app_env.target_os }}.yml"
   roles:
     - common
   environment: "{{ proxy_env }}"
+  tags: "common"
 
 - name: setup database
   hosts: dbservers
@@ -29,9 +33,11 @@
   roles:
     - database
   environment: "{{proxy_env}}"
+  tags: "database"
 
 - name: setup web servers
   hosts: webservers
+  gather_facts: true
   user: "{{ app_env.ssh_user }}"
   become: true
   become_user: root
@@ -40,6 +46,7 @@
   roles:
     - webserver
   environment: "{{proxy_env}}"
+  tags: "webserver"
 
 - name: setup load balancer servers
   hosts: balancers
@@ -51,15 +58,19 @@
   roles:
     - balancer
   environment: "{{proxy_env}}"
+  tags: "balancer"
 
 - name: install wordpress
   hosts: wps
   user: "{{ app_env.ssh_user }}"
   vars_files:
     - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/wordpress/tasks/{{ app_env.target_os }}.yml"
   roles:
     - wordpress
   environment: "{{proxy_env}}"
+  tags: "wordpress"
 
 - name: clean up resources
   hosts: cloud
@@ -71,6 +82,7 @@
   roles:
     - cleaner
   environment: "{{proxy_env}}"
+  tags: "cleaner"
 
 - name: Inform the installer
   hosts: cloud
@@ -94,3 +106,4 @@
         msg: >-
           The work load test started at {{ hostvars.cloud.starttime.time }},
           ended at {{ ansible_date_time.time }}
+  tags: "info"

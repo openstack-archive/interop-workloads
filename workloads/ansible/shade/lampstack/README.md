@@ -53,6 +53,7 @@ You may create one such file per cloud for your tests.
     }
 
     app_env: {
+      target_os: "ubuntu",
       image_name: "ubuntu-15.04",
       region_name: "RegionOne",
       availability_zone: "nova",
@@ -63,9 +64,7 @@ You may create one such file per cloud for your tests.
       stack_size: 4,
       volume_size: 2,
       block_device_name: "/dev/vdb",
-      config_drive: no,
-      wp_theme: "https://downloads.wordpress.org/theme/iribbon.2.0.65.zip",
-      wp_posts: "http://wpcandy.s3.amazonaws.com/resources/postsxml.zip"
+      config_drive: no
     }
 
 It's also possible to provide download URL's for wordpress and associated
@@ -75,11 +74,10 @@ outbound network access to the Internet (defaults show below):
     app_env: {
       ...
       wp_latest: 'https://wordpress.org/latest.tar.gz',
-      wp_cli: 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar',
       wp_importer: 'http://downloads.wordpress.org/plugin/wordpress-importer.0.6.3.zip'
     }
 
-The values of these variables should be provided by your cloud provider. When
+The values of the auth section should be provided by your cloud provider. When
 use keystone 2.0 API, you will not need to setup domain name. You can leave
 region_name empty if you have just one region. You can also leave
 private_net_name empty if your cloud does not support tenant network or you
@@ -88,7 +86,11 @@ have multiple tenant networks. validate_certs should be normally set to True
 when your cloud uses tls(ssl) and your cloud is not using self signed
 certificate. If your cloud is using self signed certificate, then the
 certificate can not be easily validated by ansible. You can skip it by setting
-the parameter to False.
+the parameter to False. currently the only values available for target_os are
+ubuntu and fedora. Supported ubuntu releases are 14.04, 15.04, 15.10, 16.04
+and 16.10. The wordpress theme and sample content are now provided by
+OpenStack foundation. If the test is successful, the OpenStack Superuser
+award site should be fully functional.
 
 
 ## Provision the LAMP stack
