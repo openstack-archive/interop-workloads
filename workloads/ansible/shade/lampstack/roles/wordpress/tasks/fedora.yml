@@ -1,0 +1,100 @@
+---
+- name: Download a wordpress theme
+  copy:
+    src: files/wptheme.zip
+    dest: /tmp/wptheme.zip
+    force: no
+
+- name: Install the theme
+  shell: sudo -u apache unzip -o -q /tmp/wptheme.zip -d /var/www/html/wp-content/themes
+  args:
+    warn: no
+
+- name: Install wordpress
+  command: >
+    wp core install --path=/var/www/html
+    --url="http://{{ hostvars.cloud.balancer.openstack.public_v4 }}"
+    --title='OpenStack Interop Challenge'
+    --admin_user=wpuser
+    --admin_password="{{ db_pass }}"
+    --admin_email='interop@openstack.org'
+  when: hostvars.cloud.balancer.openstack.public_v4 != ""
+
+- name: Install wordpress
+  command: >
+    wp core install --path=/var/www/html
+    --url="http://{{ hostvars.cloud.balancer.openstack.private_v4 }}"
+    --title='OpenStack Interop Challenge'
+    --admin_user=wpuser
+    --admin_password="{{ db_pass }}"
+    --admin_email='interop@openstack.org'
+  when: hostvars.cloud.balancer.openstack.public_v4 == ""
+
+- name: Install package for automated plugin activation
+  shell: >
+    wp package install itspriddle/wp-cli-tgmpa-plugin
+
+- name: Make an initial request, so that later switch-theme hooks work.
+  shell: >
+    sudo -u apache wp --path=/var/www/html
+    cron test
+
+- name: Activate wordpress theme
+  command: >
+    wp --path=/var/www/html theme activate superuser
+
+- name: Install and activate required plugins
+  shell: >
+    sudo -u apache wp --path=/var/www/html
+    tgmpa-plugin install --all-required --activate
+  args:
+    warn: no
+
+- name: Download wordpress importer plugin
+  get_url:
+    url: "{{ app_env.wp_importer | default('http://downloads.wordpress.org/plugin/wordpress-importer.0.6.3.zip') }}"
+    dest: "/tmp/wordpress-importer.zip"
+    force: "yes"
+
+- name: Install wordpress importer plugin
+  command: >
+    sudo -u apache wp --path=/var/www/html plugin install /tmp/wordpress-importer.zip --activate
+  args:
+    warn: "no"
+
+- name: Create temporary post directory
+  file:
+    path: /tmp/posts
+    state: directory
+    mode: "u=rwx,g=rwx,o=rx"
+
+- name: Unpack the posts
+  unarchive:
+    src: files/wpposts.zip
+    dest: /tmp/posts
+    remote_src: no
+
+- name: Wait for the posts to be unpacked
+  wait_for:
+    path: /tmp/posts
+    state: present
+
+- name: Import wordpress posts
+  command: >
+    wp --path=/var/www/html import /tmp/posts/superuser_content.xml --authors=create --quiet
+
+- name: Regenerate thumbnails for the imported posts
+  shell: >
+    sudo -u apache wp --path=/var/www/html media regenerate --yes --quiet
+
+- name: Trigger post-activation hooks
+  shell: >
+    sudo -u apache wp --path=/var/www/html
+    cron test
+
+- name: Flush rewrite rules, setup htaccess for nice permalinks
+  shell: >
+    sudo -u apache
+    WP_CLI_CONFIG_PATH=/var/www/html/wp-content/themes/superuser/wp-cli.yml
+    wp --path=/var/www/html
+    rewrite flush --hard

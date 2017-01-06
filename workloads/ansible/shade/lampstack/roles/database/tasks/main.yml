@@ -104,6 +104,12 @@
     - python2-mysql
   when: ansible_distribution == 'Fedora'
 
+- name: Update MySQL root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ db_pass }} state=present
+  with_items:
+    - 127.0.0.1
+    - localhost
+
 - service: name=mysql state=stopped enabled=yes
   when: ansible_distribution == 'Ubuntu'
 
@@ -125,10 +131,11 @@
   register: mysqlflag
 
 - name: Configure mysql 5.6+
-  replace:
-    dest: "/etc/mysql/mysql.conf.d/mysqld.cnf"
-    replace: "bind-address  = {{ local_ip.stdout }}"
-    backup: no
+  ini_file:
+    dest=/etc/mysql/mysql.conf.d/mysqld.cnf
+    section=mysqld
+    option=bind-address
+    value={{ local_ip.stdout }}
   when: mysqlflag.stat.exists == true
 
 - stat: path=/etc/my.cnf
@@ -152,13 +159,17 @@
   mysql_db:
     name: "decision2016"
     state: "{{ item }}"
+    login_user: root
+    login_password: "{{ db_pass }}"
   with_items:
-    - ['present', 'absent', 'present']
+    - ['absent', 'present']
 
 - name: Add a user
   mysql_user:
     name: "{{ db_user }}"
     password: "{{ db_pass }}"
+    login_user: root
+    login_password: "{{ db_pass }}"
     host: "%"
     priv: 'decision2016.*:ALL'
     state: present

@@ -8,10 +8,29 @@
     - apache2
     - php5
     - php5-mysql
+    - php5-gd
     - nfs-common
     - unzip
     - ssmtp
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version < '16.04'
+
+- name: Apache and php 7
+  package:
+    name="{{ item }}"
+    state=latest
+    update_cache=yes
+  with_items:
+    - apache2
+    - php7.0
+    - php7.0-mysql
+    - libapache2-mod-php7.0
+    - php7.0-cli
+    - php7.0-cgi
+    - php7.0-gd
+    - nfs-common
+    - unzip
+    - ssmtp
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version >= '16.04'
 
 - name: Apache and php 5
   package:
@@ -21,6 +40,7 @@
     - httpd
     - php
     - php-mysqlnd
+    - php5-gd
     - nfs-utils
     - unzip
     - ssmtp
@@ -30,9 +50,29 @@
   args:
     warn: no
 
+- name: Enable mod_rewrite
+  apache2_module: name=rewrite state=present
+
+- name: Enable htaccess
+  blockinfile:
+    dest: /etc/apache2/sites-enabled/000-default.conf
+    insertafter: "DocumentRoot /var/www/html"
+    content: |
+      <Directory /var/www/html>
+              AllowOverride All
+              <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteBase /
+                RewriteRule ^index\.php$ - [L]
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule . /index.php [L]
+              </IfModule>
+      </Directory>          
+
 - name: Creates share directory for wpcontent
   file:
-    path: /var/www/html/wp-content/uploads
+    path: /var/www/html/wp-content
     state: directory
     owner: www-data
     group: www-data
@@ -40,7 +80,7 @@
 
 - name: Creates share directory for wpcontent
   file:
-    path: /var/www/html/wp-content/uploads
+    path: /var/www/html/wp-content
     state: directory
     owner: apache
     group: apache
@@ -48,7 +88,7 @@
 
 - name: Mount the directory using private IP
   mount:
-    name: /var/www/html/wp-content/uploads
+    name: /var/www/html/wp-content
     src: "{{ hostvars.cloud.database.openstack.private_v4 }}:/storage/wpcontent"
     state: mounted
     fstype: nfs
@@ -56,7 +96,7 @@
 
 - name: Mount the directory using public IP
   mount:
-    name: /var/www/html/wp-content/uploads
+    name: /var/www/html/wp-content
     src: "{{ hostvars.cloud.database.openstack.public_v4 }}:/storage/wpcontent"
     state: mounted
     fstype: nfs
@@ -70,8 +110,9 @@
 
 - name: Download wordpress
   get_url:
-    url: "{{ app_env.wp_latest | default('https://wordpress.org/latest.tar.gz') }}"
+    url: "{{ app_env.wp_latest | default('https://wordpress.org/wordpress-4.6.1.tar.gz') }}"
     dest: /var/www/latest.tar.gz
+    force: no
 
 - name: Unpack latest wordpress
   shell: tar -xf /var/www/latest.tar.gz -C /var/www/html --strip-components=1
@@ -129,19 +170,8 @@
   when: ansible_distribution == 'Fedora'
 
 - name: Install wordpress command line tool
-  get_url:
-    url: "{{ app_env.wp_cli | default('https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar') }}"
+  copy:
+    src: files/wp-cli.phar
     dest: /usr/local/bin/wp
     mode: "a+x"
     force: no
-
-- name: Download a wordpress theme
-  get_url:
-    url: "{{ app_env.wp_theme }}"
-    dest: /tmp/wptheme.zip
-    force: yes
-
-- name: Install the theme
-  shell: unzip -o -q /tmp/wptheme.zip -d /var/www/html/wp-content/themes
-  args:
-    warn: no
