@@ -1,0 +1,9 @@
+Code-Review+2: Brad Topol <btopol@us.ibm.com>
+Code-Review+2: Daniel Mellado <dmellado@redhat.com>
+Workflow+1: Daniel Mellado <dmellado@redhat.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Sat, 07 Jan 2017 16:49:07 +0000
+Reviewed-on: https://review.openstack.org/417451
+Project: openstack/interop-workloads
+Branch: refs/heads/master
