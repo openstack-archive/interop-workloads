@@ -1,3 +1,24 @@
+Overview
+--------
+
+In the first round of interop challenge testing, we had the following findings
+for the workload providers:
+* It is recommanded to use Ansible + Ansible OpenStack cloud modules (based on
+OpenStack Shade) for interoperable automated deployemtns
+* It is recommanded to be prepared to have to configure your own if netnant
+network can be had
+* It is recommanded to structure your workload so that it can adapt to either
+attach instances to a routeable network or use floating IP's based on the
+parameters it's given
+* It is recommanded to parameterize things that are likely to change across
+different cloud/guest OS setups
+* It is recommanded to allow the user to set those as parameters to the workload
+or try to detect network names (like eth0) in the workload when the network nic
+is needed
+* It is recommanded to check if the cloud supports cloud-init given that workloads
+heavily relying on metadata service might fail on clouds that don't have metadata
+support
+
 Tooling
 -------
 
