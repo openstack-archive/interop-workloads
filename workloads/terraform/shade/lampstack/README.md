@@ -2,7 +2,7 @@
 
 ## Status
 
-This will install a 3 node lampstack by defulat. Two nodes will be used as
+This will install a 3 node lampstack by default. Two nodes will be used as
 web servers and one node will be used as database node.
 
 Once the script finishes, a set of URL will be displayed at the end for
@@ -36,7 +36,7 @@ ssh-add ~/.ssh/id_rsa
 
 Terraform OpenStack provider requires few environment variables to be set
 before you can run the scripts. In general, you can simply export OS
-environment varialbes like the following:
+environment variables like the following:
 
 ```
 export OS_REGION_NAME=RegionOne

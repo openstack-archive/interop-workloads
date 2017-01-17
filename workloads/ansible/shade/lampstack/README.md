@@ -115,11 +115,11 @@ If everything goes well, it will accomplish the following::
        content
     6. Setup NFS on database node, so that web servers can share the cinder
        volume space, all wordpress content will be saved on cinder volume.
-       This is to ensure that the multiple web servres will represent same
+       This is to ensure that the multiple web servers will represent same
        content.
     7. Setup mysql to use the space provided by cinder volume
     8. Configure and initialize wordpress
-    9. Install and activte a wordpress theme specified by configuration file
+    9. Install and activate a wordpress theme specified by configuration file
     10.Install wordpress importer plugin
     11.Import sample word press content
     12.Remove not needed floating IPs from servers which do not need them.
