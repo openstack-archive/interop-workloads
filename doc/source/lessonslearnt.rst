@@ -1,3 +1,28 @@
+Overview
+--------
+
+In the first round of interop challenge testing, although no comprehensive evaluations
+was performed and there may be other good options, we had the following findings
+for the workload providers:
+
+* For interoperable automated deployment, Ansible + Ansible OpenStack cloud
+modules (based on OpenStack Shade) provided the best results in our tests.
+* It is recommended to be prepared to include project network configuration as
+part of the workload
+* It is recommended to structure your workload so that it can adapt to either
+attach instances to a routeable network or use floating IP's based on the given
+parameters
+* It is recommended to parameterize things that are likely to change across
+different cloud/guest OS setups
+* It is recommended to allow the user to set the network names (like eth0) as
+parameters to the workload or try to detect these names in the workload when the
+network nic is needed
+* It is recommended to check if the cloud supports cloud-init given that workloads
+heavily relying on metadata service might fail on clouds that don't have metadata
+support
+
+Detailed explanations and examples could be found in the following sections.
+
 Tooling
 -------
 
@@ -55,7 +80,7 @@ This problem results in the alocated floating IPs hanging around, it is
 especially bad for clouds which do not have small public IP address segment.
 
 Not all clouds provide tenant networks by default.  Be prepared to have to
-configure your own if netnant network can be had.
+configure your own if tenant network can be had.
 
 Can not assume the first NIC on the guest is going to be eth0 (this is common
 on older guest OS's prior to the arrival of Predictable Network Interface
