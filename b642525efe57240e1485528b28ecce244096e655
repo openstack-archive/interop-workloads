@@ -1,0 +1,8 @@
+Code-Review+2: Brad Topol <btopol@us.ibm.com>
+Workflow+1: Gema Gomez-Solano <gema.gomez-solano@linaro.org>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 18 Jan 2017 14:11:48 +0000
+Reviewed-on: https://review.openstack.org/421007
+Project: openstack/interop-workloads
+Branch: refs/heads/master
