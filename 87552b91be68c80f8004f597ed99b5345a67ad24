@@ -1,0 +1,9 @@
+Code-Review+2: Daniel Mellado <dmellado@redhat.com>
+Code-Review+1: litong01 <email4tong@yahoo.com>
+Workflow+1: litong01 <email4tong@yahoo.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 24 Jan 2017 15:52:03 +0000
+Reviewed-on: https://review.openstack.org/423707
+Project: openstack/interop-workloads
+Branch: refs/heads/master
