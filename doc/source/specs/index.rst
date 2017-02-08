@@ -3,31 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to interop-workloads's documentation!
-========================================================
-
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   readme
-   installation
-   usage
-   contributing
+Blueprints for Interop-Workloads
+================================
+In this section you will find information on blueprints.
 
 Interop-workloads' blueprints.
-==============================
+------------------------------
 
 .. toctree::
-   :maxdepth: 1
+   :glob:
+   :maxdepth: 3
 
-   specs/index
+   *
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
