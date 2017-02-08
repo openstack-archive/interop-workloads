@@ -18,6 +18,7 @@
     --admin_user=wpuser
     --admin_password="{{ db_pass }}"
     --admin_email='interop@openstack.org'
+    --allow-root
   when: hostvars.cloud.balancer.openstack.public_v4 != ""
 
 - name: Install wordpress
@@ -28,11 +29,12 @@
     --admin_user=wpuser
     --admin_password="{{ db_pass }}"
     --admin_email='interop@openstack.org'
+    --allow-root
   when: hostvars.cloud.balancer.openstack.public_v4 == ""
 
 - name: Install package for automated plugin activation
   shell: >
-    wp package install itspriddle/wp-cli-tgmpa-plugin
+    wp package install itspriddle/wp-cli-tgmpa-plugin --allow-root
 
 - name: Make an initial request, so that later switch-theme hooks work.
   shell: >
@@ -41,7 +43,7 @@
 
 - name: Activate wordpress theme
   command: >
-    wp --path=/var/www/html theme activate superuser
+    wp --path=/var/www/html theme activate superuser --allow-root
 
 - name: Install and activate required plugins
   shell: >
@@ -81,7 +83,7 @@
 
 - name: Import wordpress posts
   command: >
-    wp --path=/var/www/html import /tmp/posts/superuser_content.xml --authors=create --quiet
+    wp --path=/var/www/html import /tmp/posts/superuser_content.xml --authors=create --quiet --allow-root
 
 - name: Regenerate thumbnails for the imported posts
   shell: >
