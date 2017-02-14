@@ -1,0 +1,79 @@
+---
+- name: provision servers
+  hosts: cloud
+  connection: local
+  vars_files:
+    - "vars/{{ env }}.yml"
+  roles:
+    - "{{ action }}"
+    - ready
+  tags: "{{ action }}"
+
+- name: Install required packages for all nodes
+  hosts: workers, masters
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/common/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - common
+  environment: "{{ proxy_env }}"
+  tags: "common"
+
+- name: Setup master
+  hosts: masters
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/master/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - master
+  environment: "{{ proxy_env }}"
+  tags: "master"
+
+- name: Setup workers
+  hosts: workers
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/worker/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - worker
+  environment: "{{ proxy_env }}"
+  tags: "worker"
+
+- name: Inform the installer
+  hosts: cloud
+  connection: local
+  tasks:
+    - debug:
+        msg: >-
+          Access kubernetes at
+          http://{{ hostvars.cloud.master.openstack.public_v4 }}.
+          userid is {{ k8suser }}, password is {{ k8spass }}
+      when: groups['masters'][0] is defined and
+            hostvars.cloud.master.openstack.public_v4 != ""
+    - debug:
+        msg: >-
+          Access kubernetes at
+          http://{{ hostvars.cloud.master.openstack.private_v4 }}.
+          userid is {{ k8suser }}, password is {{ k8spass }}
+      when: hostvars.cloud.master is defined and
+            hostvars.cloud.master.openstack.public_v4 == ""
+    - debug:
+        msg: >-
+          The work load test started at {{ hostvars.cloud.starttime.time }},
+          ended at {{ ansible_date_time.time }}
+  tags: "info"
