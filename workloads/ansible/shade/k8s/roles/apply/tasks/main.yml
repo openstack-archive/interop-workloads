@@ -1,0 +1,178 @@
+---
+- name: Retrieve specified flavor
+  os_flavor_facts:
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "{{ app_env.flavor_name }}"
+
+- name: Create a key-pair
+  os_keypair:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "k8s"
+    public_key_file: "{{ app_env.public_key_file }}"
+
+- name: Create security group
+  os_security_group:
+    state: present
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: k8s_sg
+    description: security group for lampstack
+
+- name: Add security rules
+  os_security_group_rule:
+    state: present
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    security_group: k8s_sg
+    protocol: "{{ item.protocol }}"
+    direction: "{{ item.dir }}"
+    port_range_min: "{{ item.p_min }}"
+    port_range_max: "{{ item.p_max }}"
+    remote_ip_prefix: 0.0.0.0/0
+  with_items:
+    - { p_min: 22, p_max: 22, dir: ingress, protocol: tcp }
+    - { p_min: 80, p_max: 80, dir: ingress, protocol: tcp }
+    - { p_min: 8080, p_max: 8080, dir: ingress, protocol: tcp }
+    - { p_min: 8285, p_max: 8285, dir: ingress, protocol: udp }
+    - { p_min: 10250, p_max: 10250, dir: ingress, protocol: tcp }
+    - { p_min: 2379, p_max: 2380, dir: ingress, protocol: tcp }
+    - { p_min: 2379, p_max: 2380, dir: egress, protocol: tcp }
+    - { p_min: -1, p_max: -1, dir: ingress, protocol: icmp }
+    - { p_min: -1, p_max: -1, dir: egress, protocol: icmp }
+
+- name: Create master node
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: master
+    image: "{{ app_env.image_name }}"
+    key_name: "k8s"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    userdata: "{{ lookup('file', 'templates/userdata.j2') }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: k8s_sg
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    meta:
+      hostname: master
+  register: master
+
+- name: Add master node to the master host group using public IP
+  add_host:
+    name: "{{ master.openstack.public_v4 }}"
+    inter_ip: "{{ master.openstack.private_v4 }}"
+    inter_name: "{{ master.openstack.name }}"
+    groups: masters
+  when: master.openstack.public_v4 != ""
+
+- name: Add master node to the master host group using private IP
+  add_host:
+    name: "{{ master.openstack.private_v4 }}"
+    inter_ip: "{{ master.openstack.private_v4 }}"
+    inter_name: "{{ master.openstack.name }}"
+    groups: masters
+  when: master.openstack.public_v4 == ""
+
+- name: Create worker nodes
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: worker-{{ item }}
+    image: "{{ app_env.image_name }}"
+    key_name: "k8s"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('file', 'templates/userdata.j2') }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: k8s_sg
+    meta:
+      hostname: worker-{{ item }}
+  with_sequence: count={{ app_env.stack_size - 1 }}
+  register: worker
+
+- name: Add worker nodes to workers host group with public IP
+  add_host:
+    name: "{{ item.openstack.public_v4 }}"
+    inter_ip: "{{ item.openstack.private_v4 }}"
+    inter_name: "{{ item.openstack.name }}"
+    groups: workers
+  when: item.openstack.public_v4 != ""
+  with_items: "{{ worker.results }}"
+  no_log: True
+
+- name: Add worker nodes to workers host group with private IP
+  add_host:
+    name: "{{ item.openstack.private_v4 }}"
+    inter_ip: "{{ item.openstack.private_v4 }}"
+    inter_name: "{{ item.openstack.name }}"
+    groups: workers
+  when: item.openstack.public_v4 == ""
+  with_items: "{{ worker.results }}"
+  no_log: True
+
+- name: Build up hosts file
+  lineinfile:
+    dest: "/home/{{ app_env.ssh_user }}/k8shosts"
+    line: "{{ hostvars[item].inter_ip }} {{ hostvars[item].inter_name }}"
+    state: present
+    create: yes
+  with_flattened:
+    - '{{ groups["masters"] }}'
+    - '{{ groups["workers"] }}'
+
+# The following steps create an inventory file so that we can run only
+# selected tasks once the VM have been already provisioned.
+- name: Remove the runhost file
+  file:
+    path: "/home/{{ app_env.ssh_user }}/runhosts"
+    state: absent
+
+- name: Setup host cloud
+  lineinfile:
+    dest: "/home/{{ app_env.ssh_user }}/runhosts"
+    create: yes
+    insertafter: EOF
+    line: "cloud ansible_host=127.0.0.1 ansible_python_interpreter=python"
+
+- name: Add all the hosts to the file
+  lineinfile:
+    dest: "/home/{{ app_env.ssh_user }}/runhosts"
+    create: yes
+    insertafter: EOF
+    line: >-
+      {{ item }} inter_ip={{ hostvars[item].inter_ip }}
+      inter_name={{ hostvars[item].inter_name }}
+  with_flattened:
+    - '{{ groups["masters"] }}'
+    - '{{ groups["workers"] }}'
+
+- name: Setup groups in the inventory file
+  lineinfile:
+    dest: "/home/{{ app_env.ssh_user }}/runhosts"
+    insertafter: EOF
+    line: "{{ item }}"
+  with_flattened:
+    - [ "[masters]" ]
+    - '{{ groups["masters"] }}'
+    - [ "[workers]" ]
+    - '{{ groups["workers"] }}'
