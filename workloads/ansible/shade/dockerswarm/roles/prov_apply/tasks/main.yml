@@ -9,7 +9,7 @@
 
 - name: Make certificate configuration file
   copy:
-    src: templates/openssl.cnf
+    src: ../templates/openssl.cnf
     dest: "/tmp/{{ env }}/{{ node_ip }}/keys/"
 
 - name: Make service file
@@ -29,11 +29,19 @@
     dest: "/tmp/{{ env }}/{{ node_ip }}/keys/bootstrap.sh"
   when: swarmnode.openstack.private_v4 != ""
 
+- name: Wait for ssh connection
+  wait_for:
+    host: "{{ node_ip  }}"
+    port: 22
+    delay: 2
+    timeout: 300
+    search_regex: OpenSSH
+
 - name: Transfer configureation
-  shell: scp -r "/tmp/{{ env }}/{{ node_ip }}/keys" "core@{{ node_ip }}:/home/core"
+  shell: scp -o "StrictHostKeyChecking=no" -r "/tmp/{{ env }}/{{ node_ip }}/keys" "core@{{ node_ip }}:/home/core"
 
 - name: Transfer certificate file over to the nodes
-  shell: scp -r "/tmp/{{ env }}/keys" "core@{{ node_ip }}:/home/core"
+  shell: scp -o "StrictHostKeyChecking=no" -r "/tmp/{{ env }}/keys" "core@{{ node_ip }}:/home/core"
 
 - name: Start services
   shell: ssh "core@{{ node_ip }}" "sh keys/bootstrap.sh"
