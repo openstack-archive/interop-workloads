@@ -1,0 +1,135 @@
+---
+- name: Setup couple variables
+  set_fact:
+    public_ip: "{{ ansible_host }}"
+    private_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Download flannel package
+  get_url:
+    url: "{{ app_env.flannel_repo }}"
+    dest: /etc/kubernetes/flanneld.tar.gz
+    force: no
+
+- name: Install etcd tool
+  apt:
+    name: etcd
+    update_cache: no
+  when: ansible_distribution_version >= "16.04"
+
+- name: Download and install etcd tool
+  unarchive:
+    src: "{{ app_env.etcd_repo }}"
+    dest: /usr/bin
+    remote_src: True
+  when: ansible_distribution_version < "16.04"
+
+- name: List all k8s binaries on the node
+  stat: "path=/usr/bin/{{ item }}"
+  with_items:
+    - kubelet
+    - kubectl
+    - kube-proxy
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+  register: k8s_binaries
+
+- name: Download k8s binary files if they are not already on the master node
+  get_url:
+    url: "{{ app_env.k8s_repo }}{{ item.item }}"
+    dest: "/usr/bin/{{ item.item }}"
+    mode: "0555"
+  with_items: "{{ k8s_binaries.results }}"
+  when: item.stat.exists == false
+  no_log: True
+
+- name: Unpack flannel binaries
+  unarchive:
+    src: /etc/kubernetes/flanneld.tar.gz
+    dest: /usr/bin
+    exclude: 
+      - README.me
+      - mk-docker-opts.sh
+    copy: no
+
+- name: Setup etcd urls to allow other machines to access the service
+  lineinfile:
+    dest: /etc/default/etcd
+    line: "{{ item }}"
+  with_items:
+    - ETCD_ADVERTISE_CLIENT_URLS="http://{{ private_ip }}:2379"
+    - ETCD_LISTEN_CLIENT_URLS="http://{{ private_ip }}:2379"
+
+- name: Start the etcd service
+  service:
+    name: etcd
+    state: restarted
+
+- name: Reset etcd
+  uri:
+    url: "http://{{ private_ip }}:2379/v2/keys/{{ item }}?recursive=true"
+    method: DELETE
+    status_code: 200,202,204,404
+  with_items:
+    - coreos.com
+    - registry
+
+- name: Setup services for master node
+  template:
+    src: roles/common/templates/k8s.service.j2
+    dest: "/lib/systemd/system/{{ item }}.service"
+    mode: 0644
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
+- name: Save the flanneld configuration in etcd
+  uri:
+    url: http://{{ private_ip }}:2379/v2/keys/coreos.com/network/config
+    method: PUT
+    body: >-
+      value={"Network": "172.17.0.0/16", "SubnetLen": 24,
+      "SubnetMin": "172.17.0.0", "SubnetMax": "172.17.255.0",
+      "Backend": {{ app_env.flannel_backend | to_nice_json(indent=2) }} }
+    status_code: 200,201
+
+- name: Setup api server variables
+  set_fact:
+    apiserver_params: >-
+      --etcd-servers=http://{{ private_ip }}:2379
+      --service-cluster-ip-range=172.16.0.0/24
+      --advertise-address={{ public_ip }}
+      --bind-address={{ private_ip }}
+      --insecure-bind-address={{ private_ip }}
+    controller_params: >-
+      --master=http://{{ private_ip }}:8080
+      --cluster-cidr=172.17.0.0/16
+    scheduler_params: >-
+      --master=http://{{ private_ip }}:8080
+
+- name: Configure the services
+  template:
+    src: roles/common/templates/k8s.conf.j2
+    dest: "/etc/kubernetes/{{ item.name }}"
+    mode: 0644
+  with_items:
+    - { name: "kube-apiserver", value: "{{ apiserver_params }}" }
+    - { name: "kube-controller-manager", value: "{{ controller_params }}" }
+    - { name: "kube-scheduler", value: "{{ scheduler_params }}"}
+
+- name: Enable the services
+  command: systemctl enable {{ item }}
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
+- name: Start the services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler

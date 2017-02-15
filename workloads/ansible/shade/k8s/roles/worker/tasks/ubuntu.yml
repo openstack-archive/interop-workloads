@@ -1,0 +1,105 @@
+---
+- name: List all k8s service on the node
+  stat: "path=/usr/bin/{{ item }}"
+  with_items:
+    - kubelet
+    - kubectl
+    - kube-proxy
+    - flanneld
+  register: k8s_binaries
+
+- name: Setup couple variables
+  set_fact:
+    public_ip: "{{ groups['masters'][0] }}"
+    private_ip: "{{ hostvars[groups['masters'][0]].inter_ip }}"
+    this_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Pull k8s binaries from the master
+  command: >-
+    scp -i "~/.ssh/id_rsa" -o "StrictHostKeyChecking no" "{{ app_env.
+    ssh_user }}@{{ private_ip }}:/usr/bin/{{ item.item }}" 
+    "/usr/bin/{{ item.item }}"
+  with_items: " {{ k8s_binaries.results }} "
+  when: item.stat.exists == false
+  no_log: True
+
+- name: Get the network interface name
+  shell: >-
+    ip -4 -o addr | grep "{{ this_ip }}" | awk '{print $2}'
+  register: nodeif_name
+
+- name: Setup services for worker node
+  template:
+    src: roles/common/templates/k8s.service.j2
+    dest: "/lib/systemd/system/{{ item }}.service"
+    mode: 0644
+  with_items:
+    - flanneld
+    - kubelet
+    - kube-proxy
+
+- name: Setup worker node service variables
+  set_fact:
+    kubelet_params: >-
+      --api-servers={{ private_ip }}:8080
+      --container-runtime=docker
+    proxy_params: >-
+      --master={{ private_ip }}:8080
+      --cluster-cidr=172.17.0.0/16
+    flanneld_params: >-
+      -iface={{ nodeif_name.stdout }}
+      -etcd-endpoints=http://{{ private_ip }}:2379
+      -ip-masq=true
+      -etcd-prefix=/coreos.com/network/
+
+- name: Configure the worker node services
+  template:
+    src: roles/common/templates/k8s.conf.j2
+    dest: "/etc/kubernetes/{{ item.name }}"
+    mode: 0644
+  with_items:
+    - { name: "kubelet", value: "{{ kubelet_params }}" }
+    - { name: "kube-proxy", value: "{{ proxy_params }}" }
+    - { name: "flanneld", value: "{{ flanneld_params }}" }
+
+- name: Enable worker node services
+  command: systemctl enable {{ item }}
+  with_items:
+    - flanneld
+    - kubelet
+    - kube-proxy
+
+- name: Start the flanneld service
+  service:
+    name: flanneld
+    state: started
+
+- name: Wait for the flannel to setup the subnets
+  wait_for:
+    path: /run/flannel/subnet.env
+    search_regex: FLANNEL_SUBNET
+
+- name: Get the bip address
+  shell: >-
+    . /run/flannel/subnet.env && echo $FLANNEL_SUBNET
+  register: bip
+
+- name: Get the mtu
+  shell: >-
+    . /run/flannel/subnet.env && echo $FLANNEL_MTU
+  register: mtu
+
+- name: Setup Docker Configuration file
+  template:
+    src=roles/worker/templates/daemon.j2
+    dest=/etc/docker/daemon.json
+
+- name: Start the worker services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - docker
+    - kubelet
+    - kube-proxy
+  tags: "SERVICES"
