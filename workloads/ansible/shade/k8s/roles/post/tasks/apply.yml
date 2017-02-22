@@ -1,0 +1,21 @@
+---
+- name: Setup couple variables
+  set_fact:
+    public_ip: "{{ ansible_host }}"
+    private_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Upload dashboard configuration file
+  template:
+    src: roles/post/templates/dashboard.j2
+    dest: "/etc/kubernetes/dashboard.yaml"
+    mode: 0644
+
+- name: Label the master node
+  command: >-
+    kubectl --server={{ private_ip }}:8080 label --overwrite=true
+    nodes master dashboardId=master
+
+- name: Install kubernetes dashboard
+  command: >-
+    kubectl --server={{ private_ip }}:8080 create
+    -f /etc/kubernetes/dashboard.yaml
