@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes {{ item }} Server
+Documentation=https://github.com/kubernetes/kubernetes
+
+[Service]
+EnvironmentFile=/etc/kubernetes/{{ item }}
+ExecStart=/usr/bin/{{ item }} "$DAEMON_ARGS"
+Restart=always
+RestartSec=2s
+StartLimitInterval=0
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
