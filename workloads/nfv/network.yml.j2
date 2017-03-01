@@ -1,0 +1,58 @@
+##############################################################################
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+---
+openo_net:
+  openo_vm_ip: {{ ip }}.50
+  openo_vm_mask: 255.255.255.0
+  openo_external_gw: {{ ip }}.250
+  openo_external_cidr: {{ ip }}.0/24
+
+openo_docker_net:
+  common_services_auth_ip: {{ ip }}.51
+  common_services_drivermanager_ip: {{ ip }}.52
+  common_services_extsys_ip: {{ ip }}.53
+  common_services_msb_ip: {{ ip }}.54
+  common_services_protocolstack_ip: {{ ip }}.55
+  common_services_wso2ext_ip: {{ ip }}.56
+  common_tosca_catalog_ip: {{ ip }}.57
+  common_tosca_inventory_ip: {{ ip }}.58
+  common_tosca_modeldesigner_ip: {{ ip }}.59
+  gso_service_gateway_ip: {{ ip }}.60
+  gso_service_manager_ip: {{ ip }}.61
+  nfvo_dac_ip: {{ ip }}.62
+  nfvo_driver_sdnc_zte_ip: {{ ip }}.63
+  nfvo_driver_vim_ip: {{ ip }}.64
+  nfvo_driver_vnfm_huawei_ip: {{ ip }}.65
+  nfvo_driver_vnfm_juju_ip: {{ ip }}.66
+  nfvo_driver_vnfm_zte_ip: {{ ip }}.67
+  nfvo_lcm_ip: {{ ip }}.68
+  nfvo_resmanagement_ip: {{ ip }}.69
+  nfvo_umc_ip: {{ ip }}.70
+  sdno_driver_huawei_l3vpn_ip: {{ ip }}.71
+  sdno_driver_huawei_openstack_ip: {{ ip }}.72
+  sdno_driver_huawei_overlay_ip: {{ ip }}.73
+  sdno_driver_huawei_servicechain_ip: {{ ip }}.74
+  sdno_driver_zte_sptn_ip: {{ ip }}.75
+  sdno_service_brs_ip: {{ ip }}.76
+  sdno_service_ipsec_ip: {{ ip }}.77
+  sdno_service_l2vpn_ip: {{ ip }}.78
+  sdno_service_l3vpn_ip: {{ ip }}.79
+  sdno_service_mss_ip: {{ ip }}.80
+  sdno_service_nslcm_ip: {{ ip }}.81
+  sdno_service_overlayvpn_ip: {{ ip }}.82
+  sdno_service_servicechain_ip: {{ ip }}.83
+  sdno_service_vpc_ip: {{ ip }}.84
+  sdno_service_vxlan_ip: {{ ip }}.85
+  common_tosca_aria_ip: {{ ip }}.86
+  sdno_driver_ct_te_ip: {{ ip }}.87
+  sdno_monitoring_ip: {{ ip }}.88
+  sdno_vsitemgr_ip: {{ ip }}.89
+  gso_gui_portal_ip: {{ ip }}.90
+
+juju_net:
+  juju_net_cidr: 12.1.1.0/24
+  juju_net_gw: 12.1.1.1

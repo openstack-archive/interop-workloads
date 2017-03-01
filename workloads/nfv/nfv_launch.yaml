@@ -1,0 +1,33 @@
+---
+##############################################################################
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Apache License, Version 2.0
+# which accompanies this distribution, and is available at
+# http://www.apache.org/licenses/LICENSE-2.0
+##############################################################################
+
+- hosts: localhost
+  remote_user: root
+  max_fail_percentage: 0
+  vars:
+    ip: 192.168.37
+  tasks:
+    - name: pull opera code
+      git:
+        repo: https://gerrit.opnfv.org/gerrit/opera
+        dest: /home/opera
+        update: yes
+
+    - name: config network.yml
+      template:
+        src: network.yml.j2
+        dest: /home/opera/conf/network.yml
+
+    - name: run opera_launch.sh
+      script: /home/opera/opera_launch.sh | tee opera.log
+      
+    - name: pull clearwater test code
+      git:
+        repo: https://github.com/Metaswitch/clearwater-live-test
+        dest: /home/clearwater-live-test
+        update: yes
