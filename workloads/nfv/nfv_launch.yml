@@ -1,0 +1,105 @@
+---
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations
+#  under the License.
+
+- hosts: localhost
+  remote_user: root
+  max_fail_percentage: 0
+  tasks:
+    - set_fact:
+        starttime: "{{ ansible_date_time }}"
+
+    - name: pull OPNFV Opera code
+      git:
+        repo: https://github.com/opnfv/opera.git
+        dest: /home/opera
+        update: no
+
+    - name: config admin-openrc.sh
+      template:
+        src: admin-openrc.sh.j2
+        dest: /home/opera/conf/admin-openrc.sh
+
+    - name: pull OPNFV Functest docker image to test vIMS
+      docker_image:
+        name: yaohelan/functest:stable
+
+    - name: Creates result directory
+      file: path=/home/opera/results state=directory
+
+    - name: create the opera log file
+      file: dest=/home/opera/results/opera.log state=touch
+
+    - name: deploy OPEN-O and vIMS
+      shell: /home/opera/opera_launch.sh > opera.log
+      args:
+        chdir: /home/opera/results
+
+    - name: create openstack.creds
+      shell: cp /home/opera/conf/admin-openrc.sh /home/opera/conf/openstack.creds
+
+    - name: remove OPNFV Functest docker container
+      shell: "docker rm -f functest-opera || true"
+
+    - name: get open-o endpoint
+      shell: . /home/opera/work/scripts/open-o.conf; echo $OPENO_IP:$COMMON_SERVICES_MSB_PORT
+      register: openo_endpoint
+
+    - name: Creates Functest result directory
+      file: path=/home/opera/results/functest state=directory
+
+    - name: run OPNFV Functest docker container
+      command: "docker run -id
+             -v /home/opera/conf/openstack.creds:/home/opnfv/functest/conf/openstack.creds
+             -v /home/opera/results/functest:/home/opnfv/functest/results
+             -e INSTALLER_TYPE=unknown
+             -e DEPLOY_SCENARIO=unknown
+             -e OPENO_MSB_ENDPOINT={{ item }}
+             --name=functest-opera
+             yaohelan/functest:stable /bin/bash"
+      with_items: "{{ openo_endpoint.stdout_lines }}"
+
+    - name: start OPNFV Functest docker container
+      command: "docker start functest-opera"
+
+    - name: test vIMS via OPNFV Functest
+      command: "grep 'Duration' /home/opera/opera.log"
+      register: grep_out
+      until: grep_out.stdout.find("Duration")!=-1
+      retries: 60
+      delay: 120
+
+    - name: run vIMS test on OPNFV Functest
+      command: docker exec functest-opera python /home/opnfv/repos/functest/functest/ci/run_tests.py -t opera_ims
+
+    - name: copy call information
+      command: docker cp functest-opera:/home/opnfv/functest/results/opera_ims/ellis.info /home/opera/results/ellis.info
+
+    - debug:
+        msg: >-
+          Access OPEN-O dashboard at
+          http://{{ openo_endpoint.stdout_lines }}
+
+    - name: get Ellis call information
+      command: /bin/cat /home/opera/results/ellis.info
+      register: details
+
+    - debug:
+        msg: >-
+          Ellis details
+          {{ details.stdout_lines }}
+
+    - debug:
+          msg: >-
+            The work load started at {{ starttime.time }},
+            ended at {{ ansible_date_time.time }}
+
