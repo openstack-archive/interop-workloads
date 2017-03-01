@@ -23,6 +23,8 @@ setuptools*.egg/
 !/.mailmap
 !/.pylintrc
 !/.testr.conf
+run/
+*.retry
 
 # Files created by releasenotes build
 releasenotes/build
