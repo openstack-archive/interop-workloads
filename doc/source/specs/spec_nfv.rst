@@ -12,21 +12,23 @@ http://creativecommons.org/licenses/by/3.0/legalcode
 Making a voice call is a typical scenario in telecommunication industry.
 To make the voice calling as a NFV workload running atop OpenStack
 Infrastructure, such workload consists of VNF and MANO functionality,
-Telco needs to leverage a MANO to deploy corresponsding network services
+Telco needs to leverage a MANO to deploy corresponding network services
 along with underlying infrastructure.
 In this blueprint, we deploy the voice calling workload (vIMS and Open-O,
-which serves as VNF and MANO respectively) on an OpenStack infrstructure.
+which serves as VNF and MANO respectively) on an OpenStack infrastructure.
 
 Network Function Virtualization(NFV) is a network architecture concept that
 uses virtualization technology in Telco industry. Virtual Network Function
 (VNF) is a software implementation of network functions that can be deployed
-on a Network Virtualization Infrastructure(NFVI). OpenStack is a type of
-NFVI.
+on a Network Virtualization Infrastructure(NFVI). Virtualized Infrastructure
+Manager(VIM) is responsible for controlling and managing the NFVI resources.
+OpenStack is a VIM.
 
-Running a VNF on a NFVI is a normal way to demonstrates the ability that
-OpenStack supports NFV. To fulfill the goal, a MANO is needed to manage the
-lifecycle of VNF and orchestrate the services.
+Running a VNF on a NFVI with the help of VIM is a normal way to demonstrate
+the ability that OpenStack supports NFV. To fulfill the goal, a MANO is needed
+to manage the life-cycle of VNF and orchestrate the services.
 OPEN-O is an open source MANO project.
+https://www.open-o.org/
 
 vIMS network is a core component of deploying VoLTE services in an LTE network
 and it a good candidate for showing the OpenStack deployment ability.
@@ -50,13 +52,11 @@ The primary changes that need to be done are as follows:
 
   * Python script to call OPEN-O to deploy vIMS
 
-  * Shell script to deploy a SIP client
-
 * Test scripts to verify the workload
 
   * Python script to confirm OPEN-O is working
 
-  * Ruby script to confirm vIMS is working
+  * Python script to confirm vIMS is working
 
 
 Implementation
@@ -82,13 +82,13 @@ Work Items
 
 Prerequisites
 
-1. OPEN-O VM
+1. VM to host OPEN-O containers
   * at least 4 CPUs, 64G RAM, 100G Disk
-  * Ubuntu 16.04
+  * Ubuntu 14.04
 2. vIMS VM * 7 nodes
   * 1 CPU, 2G RAM, 2G RAM, 20G Disk
   * Ubuntu 12.04
-3. OpenStack Keystone V2 is verified while Keystone V3 is not verified
+3. SIP client to make the call
 
 
 Details
@@ -97,50 +97,57 @@ Details
 
   The workload of running vIMS on OpenStack with OPEN-O
 
-  1. Deploy 1 VM by OpenStack and install the OPEN-O
+  1. Deploy OPEN-O docker containers on the host
+
     * refer to the prerequisite for the VM requirement
 
-  2. Bind the OPEN-O with OpenStack
+  2. Create security group and add security rules to allow icmp, tcp and ucp ports
 
-    * configure OpenStack as Virtual Infrastructure Manager(VIM) by calling
-    OPEN-O API, which is mainly about providing OpenStack authentication
-    information to OPEN-O
+  3. Deploy a VM on OpenStack and install Juju
 
-  3. Deploy the vIMS by OPEN-O
+  4. Connect Juju to OPEN-O
+
+    * set up the Juju VNFM web service developed by OPEN-O
+    * enable the VNFM service in OPEN-O via OPEN-O Restful API
+
+  5. Connect OPEN-O with OpenStack
+
+    * configure OPEN-O to use OpenStack as its VIM. This can be done by providing
+    the OpenStack authentication information to the orchestrator.
+
+  6. Deploy the vIMS by OPEN-O
 
     * define the Network Service Descriptor(NSD) and VNF Descriptor(VNFD) to
     give the overall definition for the topology
 
     * deploy the topology by OPEN-O
 
-      * several VMs are deployed to play different roles. A Clearwater vIMS is
-      consist of 7 VMs includes basic function nodes and a DNS.
+      * several VMs are deployed to play different roles. A detailed architecture of
+      Clearwater vIMS can be referred here
+      http://www.projectclearwater.org/technical/clearwater-architecture
+
       * refer to the prerequisite for the VM requirement
 
-  4. Configure vIMS and get specific calling number for each OpenStack vendor
+  7. Create user on vIMS and get specific calling number for each OpenStack vendor
 
-    * call vIMS API to generate identification for each OpenStack vendor
-
-  5. Configure the SIP client with the calling identification
-
-    * call the SIP client API to configure
-
-  6. Show the audiences by dialing a specific number
+    * call vIMS API to generate authentication and calling number for each 
+    OpenStack vendor
 
 2. Test scripts to verify the deployment
 
-  * script to confirm OpenStack is working
+  OPNFV Functest project has test cases to verify OpenStack, OPEN-O and vIMS deployment.
 
-    * basic scenario to create VM along with network as API verification for
-    the OpenStack
+  * test cases to confirm OpenStack is working
 
-  * script to confirm OPEN-O is working
+    * healthcheck test cases are run to make sure OpenStack is working
 
-    * basic scenario to call OPEN-O services to confirm core services are working
+  * test cases to confirm OPEN-O is working
 
-  * script to confirm vIMS is working
+    * to call OPEN-O services to confirm core services are working
 
-    * basic scenario to call vIMS services to confirm main functions are working
+  * test cases to confirm vIMS is working
+
+    * to call vIMS services to confirm main functions are working
 
 Dependencies
 ============
