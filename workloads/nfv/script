@@ -1,0 +1,2 @@
+#!/bin/bash
+python /home/opnfv/repos/functest/functest/ci/run_tests.py -t opera_ims
