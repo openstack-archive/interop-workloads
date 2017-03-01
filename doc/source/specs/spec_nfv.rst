@@ -12,21 +12,23 @@ http://creativecommons.org/licenses/by/3.0/legalcode
 Making a voice call is a typical scenario in telecommunication industry.
 To make the voice calling as a NFV workload running atop OpenStack
 Infrastructure, such workload consists of VNF and MANO functionality,
-Telco needs to leverage a MANO to deploy corresponsding network services
+Telco needs to leverage a MANO to deploy corresponding network services
 along with underlying infrastructure.
 In this blueprint, we deploy the voice calling workload (vIMS and Open-O,
-which serves as VNF and MANO respectively) on an OpenStack infrstructure.
+which serves as VNF and MANO respectively) on an OpenStack infrastructure.
 
 Network Function Virtualization(NFV) is a network architecture concept that
 uses virtualization technology in Telco industry. Virtual Network Function
 (VNF) is a software implementation of network functions that can be deployed
-on a Network Virtualization Infrastructure(NFVI). OpenStack is a type of
-NFVI.
+on a Network Virtualization Infrastructure(NFVI). Virtualized Infrastructure
+Manager(VIM) is responsible for controlling and managing the NFVI resources.
+OpenStack is a VIM.
 
-Running a VNF on a NFVI is a normal way to demonstrates the ability that
-OpenStack supports NFV. To fulfill the goal, a MANO is needed to manage the
-lifecycle of VNF and orchestrate the services.
+Running a VNF on a NFVI with the help of VIM is a normal way to demonstrate
+the ability that OpenStack supports NFV. To fulfill the goal, a MANO is needed
+to manage the life-cycle of VNF and orchestrate the services.
 OPEN-O is an open source MANO project.
+https://www.open-o.org/
 
 vIMS network is a core component of deploying VoLTE services in an LTE network
 and it a good candidate for showing the OpenStack deployment ability.
@@ -89,6 +91,7 @@ Prerequisites
   * 1 CPU, 2G RAM, 2G RAM, 20G Disk
   * Ubuntu 12.04
 3. OpenStack Keystone V2 is verified while Keystone V3 is not verified
+4. SIP client to make the call
 
 
 Details
@@ -102,9 +105,8 @@ Details
 
   2. Bind the OPEN-O with OpenStack
 
-    * configure OpenStack as Virtual Infrastructure Manager(VIM) by calling
-    OPEN-O API, which is mainly about providing OpenStack authentication
-    information to OPEN-O
+    * configure OPEN-O to use OpenStack as its VIM. This can be done by providing
+    the OpenStack authentication information to the orchestrator.
 
   3. Deploy the vIMS by OPEN-O
 
@@ -113,8 +115,10 @@ Details
 
     * deploy the topology by OPEN-O
 
-      * several VMs are deployed to play different roles. A Clearwater vIMS is
-      consist of 7 VMs includes basic function nodes and a DNS.
+      * several VMs are deployed to play different roles. A detailed architecture of
+      Clearwater vIMS can be referred here
+      http://www.projectclearwater.org/technical/clearwater-architecture
+
       * refer to the prerequisite for the VM requirement
 
   4. Configure vIMS and get specific calling number for each OpenStack vendor
@@ -131,8 +135,9 @@ Details
 
   * script to confirm OpenStack is working
 
-    * basic scenario to create VM along with network as API verification for
-    the OpenStack
+    * basic scenario to call OpenStack API to confirm OpenStack is healthy
+
+      * Tempest Smoke test is an option
 
   * script to confirm OPEN-O is working
 
