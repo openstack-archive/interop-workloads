@@ -23,10 +23,9 @@ setuptools*.egg/
 !/.mailmap
 !/.pylintrc
 !/.testr.conf
+run/
+*.retry
 
 # Files created by releasenotes build
 releasenotes/build
-
-    Contact GitHub API Training Shop Blog About 
-
 
