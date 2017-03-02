@@ -1,0 +1,9 @@
+---
+- name: Setup couple variables
+  set_fact:
+    public_ip: "{{ ansible_host }}"
+    private_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Just show something
+  debug:
+    var: ansible_host

@@ -1,0 +1,123 @@
+---
+- name: Get start timestamp
+  hosts: cloud
+  connection: local
+  tasks:
+    - set_fact:
+        starttime: "{{ ansible_date_time }}"
+  tags: "info"
+
+- name: provision servers
+  hosts: cloud
+  connection: local
+  vars_files:
+    - "vars/{{ env }}.yml"
+  roles:
+    - "{{ action }}"
+  tags: "{{ action }}"
+
+- name: Wait for servers to be up running
+  hosts: cloud
+  connection: local
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/ready/tasks/{{ action }}.yml"
+  roles:
+    - ready
+  tags: "{{ action }}"
+
+- name: Boot strap all the target nodes
+  hosts: cmasters, uworkers
+  gather_facts: False
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  strategy: free
+  vars_files:
+    - "vars/{{ env }}.yml"
+  roles:
+    - vmware.coreos-bootstrap
+  tags: "coreos"
+
+- name: Install required packages for all nodes
+  hosts: cworkers, cmasters, uworkers, umasters
+  gather_facts: False
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  strategy: free
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/common/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - common
+  environment: "{{ proxy_env }}"
+  tags: "common"
+
+- name: Setup master
+  hosts: cmasters, umaster
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/master/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - master
+  environment: "{{ proxy_env }}"
+  tags: "master"
+
+- name: Setup workers
+  hosts: cworkers, cmasters, uworkers, umasters
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  strategy: free
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/worker/tasks/{{ app_env.target_os }}.yml"
+  roles:
+    - worker
+  environment: "{{ proxy_env }}"
+  tags: "worker"
+
+- name: Post configurations
+  hosts: cmasters, umasters
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/post/tasks/{{ action }}.yml"
+  roles:
+    - post
+  environment: "{{ proxy_env }}"
+  tags: "post"
+
+- name: Inform the installer
+  hosts: cloud
+  connection: local
+  tasks:
+    - debug:
+        msg: >-
+          Access kubernetes dashboard at
+          http://{{ groups['umasters'][0] }}:30000
+      when: groups['umasters'] is defined
+    - debug:
+        msg: >-
+          Access kubernetes dashboard at
+          http://{{ groups['cmasters'][0] }}:30000
+      when: groups['cmasters'] is defined
+    - debug:
+        msg: >-
+          The work load started at {{ hostvars.cloud.starttime.time }},
+          ended at {{ ansible_date_time.time }}
+  tags: "info"
