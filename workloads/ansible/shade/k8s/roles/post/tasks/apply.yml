@@ -1,0 +1,28 @@
+---
+- name: Setup couple variables
+  set_fact:
+    public_ip: "{{ ansible_host }}"
+    private_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Upload addon service configuration files
+  template:
+    src: "roles/post/templates/{{ item }}.j2"
+    dest: "/etc/kubernetes/{{ item }}.yaml"
+    mode: 0644
+  with_items:
+    - dnscontroller
+    - dashboard
+
+- name: Label the master node
+  command: >-
+    kubectl --server={{ private_ip }}:8080 label --overwrite=true
+    nodes master dashboardId=master
+
+- name: Create addon services
+  command: >-
+    kubectl --server={{ private_ip }}:8080 create
+    -f /etc/kubernetes/{{ item }}.yaml
+  with_items:
+    - dnscontroller
+    - dashboard
+
