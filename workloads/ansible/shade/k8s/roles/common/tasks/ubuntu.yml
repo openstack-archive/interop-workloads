@@ -1,0 +1,55 @@
+---
+- name: Install Docker Engine
+  apt:
+    name: docker.io
+    update_cache: no
+
+- name: Stop the docker service
+  service:
+    name: docker
+    state: stopped
+
+- name: Place the certificate in the right place
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.target }}"
+    mode: 0400
+  with_items:
+    - { src: "{{ app_env.public_key_file }}", target: "~/.ssh/id_rsa.pub" }
+    - { src: "{{ app_env.private_key_file }}", target: "~/.ssh/id_rsa" }
+
+- name: Ensure config directories are present
+  file: "path={{ item }} state=directory mode=0755 owner=root"
+  with_items:
+    - "/etc/kubernetes"
+    - "/etc/kubernetes/manifests"
+    - "/etc/kubernetes/cni/bin"
+    - "/etc/kubernetes/cni/net.d"
+    - "~/.kube"
+
+- name: List all k8s service on the node
+  stat: "path=/lib/systemd/system/{{ item }}.service"
+  with_items:
+    - kubelet
+    - kube-proxy
+    - kube-controller-manager
+    - kube-schedule
+    - kube-apiserver
+    - docker
+    - flanneld
+  register: k8s_services
+
+- name: Stop k8s related services if they exist
+  service:
+    name: "{{ item.item }}"
+    state: stopped
+  with_items: "{{ k8s_services.results }}"
+  when: item.stat.exists == true
+  no_log: True
+
+- name: Setup /etc/hosts on every node
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ item }}"
+    state: present
+  with_lines: cat "{{ playbook_dir }}/run/k8shosts"

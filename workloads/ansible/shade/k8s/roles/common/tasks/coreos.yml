@@ -1,0 +1,8 @@
+---
+- name: display something
+  debug:
+    msg: "whatever"
+
+- name: Boot strap all the target nodes
+  include_role:
+    name: vmware.coreos-bootstrap

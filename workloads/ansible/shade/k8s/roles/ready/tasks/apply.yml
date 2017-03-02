@@ -1,0 +1,22 @@
+---
+- name: Wait until servers are up and runnning
+  wait_for:
+    host: "{{ item }}"
+    port: 22
+    state: started
+    delay: 15
+    connect_timeout: 20
+    timeout: 300
+  with_items: "{{ groups['uworkers'] }}"
+  when: groups['uworkers'] is defined
+
+- name: Wait until servers are up and runnning
+  wait_for:
+    host: "{{ item }}"
+    port: 22
+    state: started
+    delay: 15
+    connect_timeout: 20
+    timeout: 300
+  with_items: "{{ groups['cworkers'] }}"
+  when: groups['cworkers'] is defined
