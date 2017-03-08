@@ -1,0 +1,10 @@
+Code-Review+2: litong01 <email4tong@yahoo.com>
+Code-Review+1: zhangyanying <zhangyanying@inspur.com>
+Code-Review+1: KongWei <kong.wei2@zte.com.cn>
+Workflow+1: litong01 <email4tong@yahoo.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 08 Mar 2017 13:48:25 +0000
+Reviewed-on: https://review.openstack.org/434073
+Project: openstack/interop-workloads
+Branch: refs/heads/master
