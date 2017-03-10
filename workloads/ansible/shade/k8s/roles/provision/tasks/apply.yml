@@ -1,0 +1,71 @@
+---
+- name: Setup variables
+  set_fact:
+    target_interpreter: "/home/core/bin/python"
+    tp_path: "roles/provision/templates/{{ app_env.target_os }}.j2"
+  when: app_env.target_os == "coreos"
+
+- name: Setup variables
+  set_fact:
+    target_interpreter: "python"
+    tp_path: "roles/provision/templates/{{ app_env.target_os }}.j2"
+  when: app_env.target_os == "ubuntu"
+
+- name: Create an OpenStack virtual machine
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "{{ inventory_hostname }}"
+    image: "{{ app_env.image_name }}"
+    key_name: "k8s"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: k8s_sg
+    meta:
+      hostname: "{{ inventory_hostname }}"
+  register: osvm
+
+- name: Setup variables for generate host groups
+  set_fact:
+    inter_name: "{{ osvm.openstack.name }}"
+    public_ip: "{{ osvm.openstack.public_v4 }}"
+    private_ip: "{{ osvm.openstack.private_v4 }}"
+
+- name: Use public ip address when private ip is empty
+  set_fact:
+    private_ip: "{{ osvm.openstack.public_v4 }}"
+  when: osvm.openstack.private_v4 == ""
+
+- name: Use private ip address when public ip is empty
+  set_fact:
+    public_ip: "{{ osvm.openstack.private_v4 }}"
+  when: osvm.openstack.public_v4 == ""
+
+- name: Create volumes for the node
+  os_volume:
+    state: present
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    size: "{{ app_env.volume_size }}"
+    wait: yes
+    display_name: "{{ inventory_hostname }}_volume"
+
+- name: Attach a volume to the node
+  os_server_volume:
+    state: present
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    server: "{{ inventory_hostname }}"
+    volume: "{{ inventory_hostname }}_volume"
+    device: "{{ app_env.block_device_name }}"
