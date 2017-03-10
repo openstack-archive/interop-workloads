@@ -1,0 +1,24 @@
+#cloud-config
+write_files:
+  - path: "/home/core/bootstrap.sh"
+    permissions: "0700"
+    owner: "root"
+    content: |
+      addr=$(ip -4 -o addr | grep -v '127.0.0.1' | awk 'NR==1{print $4}' | cut -d '/' -f 1)
+      name=$(hostname | cut -d '.' -f 1)
+      echo $addr $name >> /etc/hosts
+      echo $name > /etc/hostname
+      hostname $name
+
+coreos:
+  units:
+    - name: "bootstrap.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Setup host names
+        After=network-online.target
+
+        [Service]
+        Type=oneshot
+        ExecStart=/bin/sh /home/core/bootstrap.sh

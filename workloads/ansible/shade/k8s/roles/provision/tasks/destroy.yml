@@ -1,0 +1,26 @@
+---
+
+- name: Destroy the OpenStack VM
+  os_server:
+    state: "absent"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "{{ inventory_hostname }}"
+    image: "{{ app_env.image_name }}"
+    key_name: "k8s"
+    timeout: 200
+    network: "{{ app_env.private_net_name }}"
+    meta:
+      hostname: "{{ inventory_hostname }}"
+
+- name: Destroy the OpenStack volume
+  os_volume:
+    state: absent
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    wait: yes
+    display_name: "{{ inventory_hostname }}_volume"
