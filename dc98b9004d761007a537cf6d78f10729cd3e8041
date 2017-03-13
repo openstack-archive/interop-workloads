@@ -1,0 +1,9 @@
+Code-Review+2: litong01 <email4tong@yahoo.com>
+Code-Review+1: Eric Xie <eric_xiett@163.com>
+Workflow+1: Luz Cazares <luz.cazares@intel.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 13 Mar 2017 15:07:45 +0000
+Reviewed-on: https://review.openstack.org/437279
+Project: openstack/interop-workloads
+Branch: refs/heads/master
