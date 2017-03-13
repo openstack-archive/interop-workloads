@@ -1,0 +1,20 @@
+---
+- name: Delete key pairs
+  os_keypair:
+    state: "absent"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "k8s"
+    public_key_file: "{{ app_env.public_key_file }}"
+
+- name: Delete security group
+  os_security_group:
+    state: absent
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: k8s_sg
+    description: secuirty group for lampstack

@@ -1,0 +1,87 @@
+---
+- name: Setup host couple variables
+  set_fact:
+    target_interpreter: "/home/core/bin/python"
+    wgroups: "cworkers"
+    mgroups: "cmasters"
+  when: app_env.target_os == "coreos"
+
+- name: Setup couple variables
+  set_fact:
+    target_interpreter: "python"
+    wgroups: "uworkers"
+    mgroups: "umasters"
+  when: app_env.target_os == "ubuntu"
+
+- name: Remove the runhost file
+  file:
+    path: "{{ playbook_dir }}/run/runhosts"
+    state: absent
+
+- name: Setup host cloud
+  lineinfile:
+    dest: "{{ playbook_dir }}/run/runhosts"
+    create: yes
+    insertafter: EOF
+    line: "cloud ansible_host=127.0.0.1 ansible_python_interpreter=python"
+
+- name: Add the node to host group with private IP
+  add_host:
+    name: "{{ hostvars[item].public_ip }}"
+    inter_ip: "{{ hostvars[item].private_ip }}"
+    inter_name: "{{ item }}"
+    ansible_python_interpreter: "{{ hostvars[item].target_interpreter }}"
+    groups: "{{ hostvars[item].targetgroup }}"
+  with_items: "{{ groups['prohosts'] }}"
+
+- name: Remove the k8shosts file
+  file:
+    path: "{{ playbook_dir }}/run/k8shosts"
+    state: absent
+
+- name: Build up hosts file
+  lineinfile:
+    dest: "{{ playbook_dir }}/run/k8shosts"
+    line: "{{ hostvars[item].inter_ip }} {{ hostvars[item].inter_name }}.k8sonos"
+    state: present
+    create: yes
+  with_flattened:
+    - '{{ groups[mgroups] }}'
+    - '{{ groups[wgroups] }}'
+
+- name: Add all the hosts to the file
+  lineinfile:
+    dest: "{{ playbook_dir }}/run/runhosts"
+    create: yes
+    insertafter: EOF
+    line: >-
+      {{ item }} inter_ip={{ hostvars[item].inter_ip }}
+      inter_name={{ hostvars[item].inter_name }}
+      ansible_python_interpreter={{ target_interpreter }}
+  with_items:
+    - '{{ groups[mgroups] }}'
+    - '{{ groups[wgroups] }}'
+
+- name: Setup groups in the inventory file
+  lineinfile:
+    dest: "{{ playbook_dir }}/run/runhosts"
+    insertafter: EOF
+    line: "{{ item }}"
+  with_items:
+    - '[{{ mgroups }}]'
+    - '{{ groups[mgroups] }}'
+    - '[{{ wgroups }}]'
+    - '{{ groups[wgroups] }}'
+
+- name: Wait until servers are up and runnning
+  wait_for:
+    host: "{{ item }}"
+    port: 22
+    state: started
+    delay: 15
+    connect_timeout: 20
+    timeout: 300
+  with_items:
+    - "{{ groups[mgroups] }}"
+    - "{{ groups[wgroups] }}"
+
