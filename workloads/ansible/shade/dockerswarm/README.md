@@ -17,9 +17,11 @@ then you can run docker commands against the swarm
   using some other environment run the script, then the steps setting up
   docker client may be different::
 
+    ```
     apt-get update
     apt-get -y install docker.io
     ln -sf /usr/bin/docker.io /usr/local/bin/docker
+    ```
 
 ## Ansible
 
