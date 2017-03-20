@@ -1,0 +1,44 @@
+---
+horizon_url: "http://9.30.217.9"
+
+auth: {
+  auth_url: "http://9.30.217.9:5000/v3",
+  username: "demo",
+  password: "{{ password }}",
+  domain_name: "default",
+  project_name: "demo"
+}
+
+app_env: {
+  target_os: "ubuntu",
+  image_name: "ubuntu-16.04",
+  region_name: "RegionOne",
+  availability_zone: "nova",
+  validate_certs: False,
+  ssh_user: "ubuntu",
+  private_net_name: "demonet",
+  flavor_name: "m1.medium",
+  public_key_file: "/home/ubuntu/.ssh/interop.pub",
+  private_key_file: "/home/ubuntu/.ssh/interop",
+  stack_size: 3,
+  volume_size: 1,
+  block_device_name: "/dev/vdb",
+
+  domain: "cluster.local",
+  pod_network: {
+    Network: "172.17.0.0/16",
+    SubnetLen: 24,
+    SubnetMin: "172.17.0.0",
+    SubnetMax: "172.17.255.0",
+    Backend: {
+      Type: "udp",
+      Port: 8285
+    }
+  },
+  service_ip_range: "172.16.0.0/24",
+  dns_service_ip: "172.16.0.4",
+  dashboard_service_ip: "172.16.0.4",
+
+  flannel_repo: "https://github.com/coreos/flannel/releases/download/v0.7.0/flannel-v0.7.0-linux-amd64.tar.gz",
+  k8s_repo: "https://storage.googleapis.com/kubernetes-release/release/v1.5.3/bin/linux/amd64/"
+}
