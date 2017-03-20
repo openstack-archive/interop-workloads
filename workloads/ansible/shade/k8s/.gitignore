@@ -1,0 +1,8 @@
+*.out
+vars/*
+run/*
+site.retry
+*/**/*.log
+*/**/.DS_Store
+*/**/._
+*/**/*.tfstate*
