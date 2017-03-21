@@ -1,0 +1,34 @@
+---
+- name: Setup host couple variables
+  set_fact:
+    target_interpreter: "/home/core/bin/python"
+    wgroups: "cworkers"
+    mgroups: "cmasters"
+  when: app_env.target_os == "coreos"
+
+- name: Setup couple variables
+  set_fact:
+    target_interpreter: "python"
+    wgroups: "uworkers"
+    mgroups: "umasters"
+  when: app_env.target_os == "ubuntu"
+
+- name: Add provisioning host group
+  add_host:
+    name: "worker-{{ item }}"
+    targetgroup: "{{ wgroups }}"
+    ansible_host: "127.0.0.1"
+    ansible_python_interpreter: "python"
+    groups: "prohosts"
+  with_sequence: count={{ app_env.stack_size - 1 }}
+  no_log: True
+
+- name: Add provisioning host group
+  add_host:
+    name: "master"
+    targetgroup: "{{ mgroups }}"
+    ansible_host: "127.0.0.1"
+    ansible_python_interpreter: "python"
+    groups: "prohosts"
+  no_log: True
+
