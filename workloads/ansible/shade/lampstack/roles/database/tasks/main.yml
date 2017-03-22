@@ -62,11 +62,9 @@
 - name: Setup NFS webserver access
   lineinfile:
     dest: /etc/exports
-    line: "/storage/wpcontent {{ item[0].openstack[item[1]] }}/32(rw,sync,no_root_squash,no_subtree_check)"
-  with_nested:
-    - "{{ hostvars.cloud.webserver.results }}"
-    - ["private_v4", "public_v4"]
-  when: item[0].openstack[item[1]] != ''
+    line: "/storage/wpcontent {{ hostvars[item].inter_ip }}/32(rw,sync,no_root_squash,no_subtree_check)"
+  with_flattened:
+    - "{{ groups['webservers'] }}"
   no_log: True
 
 - name: nfs export

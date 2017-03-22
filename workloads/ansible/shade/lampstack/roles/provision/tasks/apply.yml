@@ -1,0 +1,49 @@
+---
+- name: Create an OpenStack virtual machine
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "{{ inventory_hostname }}"
+    image: "{{ app_env.image_name }}"
+    key_name: "lampstack"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    userdata: "{{ lookup('template', 'roles/provision/templates/userdata.j2') }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: lampstack_sg
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    meta:
+      hostname: "{{ inventory_hostname }}"
+  register: osvm
+
+- name: Setup variables for generating host groups
+  set_fact:
+    inter_name: "{{ osvm.openstack.name }}"
+    public_ip: "{{ osvm.openstack.public_v4 }}"
+    private_ip: "{{ osvm.openstack.private_v4 }}"
+
+- name: Use public ip address when private ip is empty
+  set_fact:
+    private_ip: "{{ osvm.openstack.public_v4 }}"
+  when: osvm.openstack.private_v4 == ""
+
+- name: Use private ip address when public ip is empty
+  set_fact:
+    public_ip: "{{ osvm.openstack.private_v4 }}"
+  when: osvm.openstack.public_v4 == ""
+
+- name: Attach a volume to the node
+  os_server_volume:
+    state: present
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    server: "{{ inventory_hostname }}"
+    volume: "db_volume"
+    device: "{{ app_env.block_device_name }}"
+  when: inventory_hostname == "database"
