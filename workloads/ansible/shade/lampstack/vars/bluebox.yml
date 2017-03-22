@@ -11,16 +11,16 @@ auth: {
 app_env: {
   target_os: "ubuntu",
   ssh_user: "ubuntu",
-  image_name: "ubuntu-16.10",
+  image_name: "Ubuntu 16.04",
   region_name: "",
   availability_zone: "",
-  validate_certs: True,
-  private_net_name: "interopnet",
+  validate_certs: False,
+  private_net_name: "demonet",
   flavor_name: "m1.small",
-  public_key_file: "/home/ubuntu/.ssh/id_rsa.pub",
+  public_key_file: "/home/ubuntu/.ssh/interop.pub",
   stack_size: 4,
-  volume_size: 10,
+  volume_size: 4,
   block_device_name: "/dev/vdb",
-  wp_latest: "https://wordpress.org/wordpress-4.6.1.tar.gz",
-  wp_importer: "http://downloads.wordpress.org/plugin/wordpress-importer.0.6.3.zip"
+  wp_latest: "http://10.0.10.41/lampstack/wordpress-4.6.1.tar.gz",
+  wp_importer: "http://10.0.10.41/lampstack/wordpress-importer.0.6.3.zip"
 }
