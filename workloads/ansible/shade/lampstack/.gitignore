@@ -1,5 +1,6 @@
 *.out
 vars/*
+run/*
 */**/*.log
 */**/.DS_Store
 */**/._

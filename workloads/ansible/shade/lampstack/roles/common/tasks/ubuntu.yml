@@ -1,4 +1,7 @@
 ---
-- name: Wait until server is up and runnning
-  local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
-  become: no
+- name: Setup /etc/hosts on every node
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ item }}"
+    state: present
+  with_lines: cat "{{ playbook_dir }}/run/lampstackhosts"
