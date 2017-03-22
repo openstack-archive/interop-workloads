@@ -1,0 +1,134 @@
+---
+- name: Setup public and privte IP variables
+  set_fact:
+    public_ip: "{{ ansible_host }}"
+    private_ip: "{{ hostvars[ansible_host].inter_ip }}"
+
+- name: Setup service path variables for coreos
+  set_fact:
+    service_path: "/etc/systemd/system/"
+  when: app_env.target_os == "coreos"
+
+- name: Setup service path variables for ubuntu
+  set_fact:
+    service_path: "/lib/systemd/system/"
+  when: app_env.target_os == "ubuntu"
+
+- name: Install etcd
+  apt:
+    name: etcd
+    update_cache: no
+  when: app_env.target_os == "ubuntu"
+
+- name: Download flannel package
+  get_url:
+    url: "{{ app_env.flannel_repo }}"
+    dest: /opt/bin/flanneld.tar.gz
+    force: no
+
+- name: Unpack flannel binaries
+  unarchive:
+    src: /opt/bin/flanneld.tar.gz
+    dest: /opt/bin
+    exclude:
+      - README.me
+      - mk-docker-opts.sh
+    copy: no
+
+- name: List all k8s binaries on the node
+  stat: "path=/opt/bin/{{ item }}"
+  with_items:
+    - kubelet
+    - kubectl
+    - kube-proxy
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+  register: k8s_binaries
+
+- name: Download k8s binary files if they are not already on the master node
+  get_url:
+    url: "{{ app_env.k8s_repo }}{{ item.item }}"
+    dest: "/opt/bin/{{ item.item }}"
+    mode: "0555"
+  with_items: "{{ k8s_binaries.results }}"
+  when: item.stat.exists == false
+  no_log: True
+
+- name: Config services
+  template:
+    src: "roles/master/templates/etcd.{{ app_env.target_os }}.j2"
+    dest: "{{ service_path }}etcd.service"
+    mode: 0644
+
+- name: Reload services
+  command: systemctl daemon-reload
+
+- name: Enable and start etcd services
+  service:
+    name: "etcd"
+    enabled: yes
+    state: restarted
+
+- name: Reset etcd
+  uri:
+    url: "http://{{ private_ip }}:2379/v2/keys/{{ item }}?recursive=true"
+    method: DELETE
+    status_code: 200,202,204,404
+  with_items:
+    - coreos.com
+    - registry
+
+- name: Initialize the flanneld configuration in etcd
+  uri:
+    url: http://{{ private_ip }}:2379/v2/keys/coreos.com/network/config
+    method: PUT
+    body: >-
+      value={{ app_env.pod_network | to_nice_json(indent=2) }}
+    status_code: 200,201
+
+- name: Setup service parameters
+  set_fact:
+    apiserver_params: >-
+      --etcd-servers=http://{{ private_ip }}:2379
+      --service-cluster-ip-range={{ app_env.service_ip_range }}
+      --advertise-address={{ public_ip }}
+      --bind-address={{ private_ip }}
+      --insecure-bind-address={{ private_ip }}
+    controller_params: >-
+      --master=http://{{ private_ip }}:8080
+      --cluster-cidr={{ app_env.pod_network.Network }}
+      --cluster-name=k8sonos
+    scheduler_params: >-
+      --master=http://{{ private_ip }}:8080
+
+- name: Configure the services
+  template:
+    src: roles/common/templates/k8s.conf.j2
+    dest: "/etc/kubernetes/{{ item.name }}"
+    mode: 0644
+  with_items:
+    - { name: "kube-apiserver", value: "{{ apiserver_params }}" }
+    - { name: "kube-controller-manager", value: "{{ controller_params }}" }
+    - { name: "kube-scheduler", value: "{{ scheduler_params }}"}
+
+- name: Setup services for master node
+  template:
+    src: "roles/common/templates/k8s.service.j2"
+    dest: "{{ service_path }}{{ item }}.service"
+    mode: 0644
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
+- name: Enable and start the services
+  service:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
