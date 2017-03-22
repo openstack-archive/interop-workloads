@@ -1,4 +1,8 @@
 ---
+- name: update apt cache
+  apt: update_cache=yes
+  when: ansible_os_family == "Debian"
+
 - name: Haproxy install
   package:
     name: haproxy
@@ -28,11 +32,9 @@
 - name: Add web servers to the haproxy
   lineinfile:
     dest: /etc/haproxy/haproxy.cfg
-    line: "    server ws{{ item[0].openstack[item[1]] }} {{ item[0].openstack[item[1]] }}:80 check"
-  with_nested:
-    - "{{ hostvars.cloud.webserver.results }}"
-    - ["private_v4", "public_v4"]
-  when: item[0].openstack[item[1]] != ''
+    line: "    server ws{{ hostvars[item].inter_ip }} {{ hostvars[item].inter_ip }}:80 check"
+  with_flattened:
+    - "{{ groups['webservers'] }}"
   no_log: True
 
 - service: name=haproxy state=restarted enabled=yes

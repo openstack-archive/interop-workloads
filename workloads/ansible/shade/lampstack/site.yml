@@ -1,14 +1,47 @@
 ---
-- name: provision servers
+- name: Get start timestamp
+  hosts: cloud
+  connection: local
+  tasks:
+    - set_fact:
+        starttime: "{{ ansible_date_time }}"
+  tags: "info"
+
+- name: Prepare to run the workload
   hosts: cloud
   connection: local
   vars_files:
     - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/prepare/tasks/{{ action }}.yml"
   roles:
-    - "{{ action }}"
+    - prepare
   tags: "{{ action }}"
 
-- name: Install python2 for ansible to work
+- name: provision servers
+  hosts: prohosts
+  connection: local
+  strategy: free
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/provision/tasks/{{ action }}.yml"
+  roles:
+    - provision
+  tags: "{{ action }}"
+
+- name: Post provision process
+  hosts: cloud
+  connection: local
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/postprovision/tasks/{{ action }}.yml"
+  roles:
+    - postprovision
+  tags: "{{ action }}"
+
+- name: Performe common tasks on all servers
   hosts: dbservers, webservers, balancers
   gather_facts: false
   user: "{{ app_env.ssh_user }}"
@@ -91,17 +124,9 @@
     - debug:
         msg: >-
           Access wordpress at
-          http://{{ hostvars.cloud.balancer.openstack.public_v4 }}.
+          http://{{ groups['balancers'][0] }}.
           wordpress userid is wpuser, password is {{ db_pass }}
-      when: hostvars.cloud.balancer is defined and
-            hostvars.cloud.balancer.openstack.public_v4 != ""
-    - debug:
-        msg: >-
-          Access wordpress at
-          http://{{ hostvars.cloud.balancer.openstack.private_v4 }}.
-          wordpress userid is wpuser, password is {{ db_pass }}
-      when: hostvars.cloud.balancer is defined and
-            hostvars.cloud.balancer.openstack.public_v4 == ""
+      when: groups['balancers'] is defined
     - debug:
         msg: >-
           The work load test started at {{ hostvars.cloud.starttime.time }},
