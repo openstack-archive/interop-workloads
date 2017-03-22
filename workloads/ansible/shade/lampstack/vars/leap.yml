@@ -11,16 +11,17 @@ auth: {
 
 app_env: {
   target_os: "ubuntu",
-  image_name: "ubuntu-14.04",
+  image_name: "ubuntu-16.04",
   region_name: "RegionOne",
   availability_zone: "nova",
   validate_certs: False,
   ssh_user: "ubuntu",
   private_net_name: "demonet",
   flavor_name: "m1.large",
-  public_key_file: "/home/ubuntu/.ssh/id_rsa.pub",
+  public_key_file: "/home/ubuntu/.ssh/interop.pub",
   stack_size: 4,
   volume_size: 2,
   block_device_name: "/dev/vdb",
-  wp_latest: "https://wordpress.org/wordpress-4.6.tar.gz"
+  wp_latest: "http://10.0.10.12/lampstack/wordpress-4.6.1.tar.gz",
+  wp_importer: "http://10.0.10.12/lampstack/wordpress-importer.0.6.3.zip"
 }

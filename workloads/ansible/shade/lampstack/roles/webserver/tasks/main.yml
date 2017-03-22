@@ -89,18 +89,9 @@
 - name: Mount the directory using private IP
   mount:
     name: /var/www/html/wp-content
-    src: "{{ hostvars.cloud.database.openstack.private_v4 }}:/storage/wpcontent"
+    src: "{{ hostvars[groups['dbservers'][0]].inter_ip }}:/storage/wpcontent"
     state: mounted
     fstype: nfs
-  when: hostvars.cloud.database.openstack.private_v4 != ""
-
-- name: Mount the directory using public IP
-  mount:
-    name: /var/www/html/wp-content
-    src: "{{ hostvars.cloud.database.openstack.public_v4 }}:/storage/wpcontent"
-    state: mounted
-    fstype: nfs
-  when: hostvars.cloud.database.openstack.private_v4 == ""
 
 - lineinfile: dest=/etc/apache2/apache2.conf line="ServerName localhost"
   when: ansible_distribution == 'Ubuntu'
@@ -134,22 +125,14 @@
     - { then: 'database_name_here', now: 'decision2016' }
     - { then: 'username_here', now: "{{ db_user }}" }
     - { then: 'password_here', now: "{{ db_pass }}" }
+  no_log: True
 
 - name: Configure wordpress network access using private IP
   replace:
     dest: /var/www/html/wp-config.php
     regexp: "'localhost'"
-    replace: "'{{ hostvars.cloud.database.openstack.private_v4 }}'"
+    replace: "'{{ hostvars[groups['dbservers'][0]].inter_ip }}'"
     backup: no
-  when: hostvars.cloud.database.openstack.private_v4 != ""
-
-- name: Configure wordpress network access using public IP
-  replace:
-    dest: /var/www/html/wp-config.php
-    regexp: "'localhost'"
-    replace: "'{{ hostvars.cloud.database.openstack.public_v4 }}'"
-    backup: no
-  when: hostvars.cloud.database.openstack.private_v4 == ""
 
 - name: Change ownership of wordpress
   shell: chown -R www-data:www-data /var/www/html

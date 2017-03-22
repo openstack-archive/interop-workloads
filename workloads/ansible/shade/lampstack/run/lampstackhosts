@@ -1,0 +1,4 @@
+10.0.10.10 database
+10.0.10.13 balancer
+10.0.10.4 apache-1
+10.0.10.8 apache-2

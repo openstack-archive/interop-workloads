@@ -1,0 +1,9 @@
+#cloud-config
+packages:
+ - python2.7
+
+runcmd:
+ - if [ ! -x /usr/bin/python ]; then update-alternatives --install /usr/bin/python python /usr/bin/python2.7 10; fi
+ - addr=$(ip -4 -o addr | grep -v '127.0.0.1' | awk 'NR==1{print $4}' | cut -d '/' -f 1)
+ - echo $addr `hostname` >> /etc/hosts
+ 
