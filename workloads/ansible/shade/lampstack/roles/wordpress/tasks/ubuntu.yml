@@ -13,28 +13,12 @@
 - name: Install wordpress
   command: >
     wp core install --path=/var/www/html
-    --url="http://{{ hostvars.cloud.balancer.openstack.public_v4 }}"
+    --url="http://{{ groups['balancers'][0] }}"
     --title='OpenStack Interop Challenge'
     --admin_user=wpuser
     --admin_password="{{ db_pass }}"
     --admin_email='interop@openstack.org'
     --allow-root
-  when: hostvars.cloud.balancer.openstack.public_v4 != ""
-
-- name: Install wordpress
-  command: >
-    wp core install --path=/var/www/html
-    --url="http://{{ hostvars.cloud.balancer.openstack.private_v4 }}"
-    --title='OpenStack Interop Challenge'
-    --admin_user=wpuser
-    --admin_password="{{ db_pass }}"
-    --admin_email='interop@openstack.org'
-    --allow-root
-  when: hostvars.cloud.balancer.openstack.public_v4 == ""
-
-- name: Install package for automated plugin activation
-  shell: >
-    wp package install itspriddle/wp-cli-tgmpa-plugin --allow-root
 
 - name: Make an initial request, so that later switch-theme hooks work.
   shell: >
@@ -45,12 +29,38 @@
   command: >
     wp --path=/var/www/html theme activate superuser --allow-root
 
-- name: Install and activate required plugins
+- name: Install required plugins
   shell: >
-    sudo -u www-data wp --path=/var/www/html
-    tgmpa-plugin install --all-required --activate
+    sudo -u www-data wp --path=/var/www/html plugin install {{ item }} && sleep 2
+  with_items:
+    - advanced-custom-fields
+    - cforms2
+    - co-authors-plus
+    - disable-comments
+    - pmzez-page-loader
+    - responsive-lightbox
   args:
     warn: no
+
+- name: Activate required plugins
+  shell: >
+    sudo -u www-data wp --path=/var/www/html plugin activate {{ item }} && sleep 2
+  with_items:
+    - advanced-custom-fields
+    - cforms2
+    - co-authors-plus
+    - disable-comments
+    - pmzez-page-loader
+    - responsive-lightbox
+  args:
+    warn: no
+
+- name: Activate required plugins II
+  shell: >
+    sudo -u www-data wp --path=/var/www/html plugin install {{ item }} --activate && sleep 2
+  with_items:
+    - /var/www/html/wp-content/themes/superuser/src/plugins/pbd-ajax-load-posts.zip
+    - /var/www/html/wp-content/themes/superuser/src/plugins/share-links.zip\
 
 - name: Download wordpress importer plugin
   get_url:
