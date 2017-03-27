@@ -99,6 +99,7 @@ your own environment file. Here is an example of the file::
       service_ip_range: "172.16.0.0/24",
       dns_service_ip: "172.16.0.4",
 
+      cockroachdb_repo: "http://10.0.10.12/cockroachdb.tar.gz",
       flannel_repo: "https://github.com/coreos/flannel/releases/download/v0.7.0/flannel-v0.7.0-linux-amd64.tar.gz",
       k8s_repo: "https://storage.googleapis.com/kubernetes-release/release/v1.5.3/bin/linux/amd64/"
     }
@@ -198,6 +199,7 @@ If everything goes well, it will accomplish the following::
     7. Download software for worker node from the master node.
     8. Setup flanneld, docker, kubelet and kube-proxy on each work node.
     9. Install kubernetes dashboard and dns services.
+    10.Deploy cockroachdb cluster and its dashboard.
 
 
 ## The method to run just a play, not the entire playbook
@@ -207,7 +209,7 @@ first play, the inventory file will be place at the run directory of the
 playbook root. If you like to only run specify plays, you will be able to run
 the playbook like the following:
 
-    ansible-playbook -i run/runhosts -e "action=apply env=leap password=XXXXX" site.yml
+    ansible-playbook -i run/runhosts -e "action=apply env=coreos password=XXXXX" site.yml
     --tags "common,master"
 
 The above command will use the runhosts inventory file and only run plays
@@ -216,15 +218,20 @@ named common and master, all other plays in the play book will be skipped.
 
 ## Next Steps
 
-### Check its up
+### Check that everything is up
 
 If there are no errors, you can use kubectl to work with your kubernetes
-cluster.
+cluster. Both kubernetes and cockroachdb dashboards should be avilable to at
+different ports. Select a public accessable IP address with the following
+port, your browser should show the two dashboards.
+
+    <ip_address>:30000    kubernetes dashboard
+    <ip_address>:32256    cockroachdb dashboard
 
 ## Cleanup
 
 Once you're done with it, don't forget to nuke the whole thing::
 
-    ansible-playbook -e "action=destroy env=leap password=XXXXX" site.yml
+    ansible-playbook -e "action=destroy env=coreos password=XXXXX" site.yml
 
 The above command will destroy all the resources created.
