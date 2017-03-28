@@ -99,6 +99,7 @@ your own environment file. Here is an example of the file::
       service_ip_range: "172.16.0.0/24",
       dns_service_ip: "172.16.0.4",
 
+      cockroachdb_repo: "http://10.0.10.12/cockroachdb.tar.gz",
       flannel_repo: "https://github.com/coreos/flannel/releases/download/v0.7.0/flannel-v0.7.0-linux-amd64.tar.gz",
       k8s_repo: "https://storage.googleapis.com/kubernetes-release/release/v1.5.3/bin/linux/amd64/"
     }
@@ -198,33 +199,42 @@ If everything goes well, it will accomplish the following::
     7. Download software for worker node from the master node.
     8. Setup flanneld, docker, kubelet and kube-proxy on each work node.
     9. Install kubernetes dashboard and dns services.
+    10.Deploy cockroachdb cluster and its dashboard.
 
 
-## The method to run just a play, not the entire playbook
+## The method for running just a play, not the entire playbook
 
-The script will create an ansible inventory file name runhosts at the very
-first play, the inventory file will be place at the run directory of the
-playbook root. If you like to only run specify plays, you will be able to run
-the playbook like the following:
+The script will create an ansible inventory file named runhosts at the very
+first time you run the playbook, the inventory file will be place at a
+directory named "run" at the root directory of the playbook. This file will be
+updated in later runs if there are changes such as adding or removing hosts.
+With this file, if you like to run only few plays, you will be able to do
+that by following the example below:
 
-    ansible-playbook -i run/runhosts -e "action=apply env=leap password=XXXXX" site.yml
+    ansible-playbook -i run/runhosts -e "action=apply env=coreos password=XXXXX" site.yml
     --tags "common,master"
 
 The above command will use the runhosts inventory file and only run plays
-named common and master, all other plays in the play book will be skipped.
+named common and master, all other plays in the play book will be skipped. All
+available plays can be found in the site.yml file.
 
 
 ## Next Steps
 
-### Check its up
+### Check that everything is running correctly
 
 If there are no errors, you can use kubectl to work with your kubernetes
-cluster.
+cluster. Kubernetes and cockroachdb dashboards should be available at
+different ports. Point your browser to an accessible IP address with the
+following ports and your browser should show the dashboards.
+
+    <ip_address>:30000    kubernetes dashboard
+    <ip_address>:32256    cockroachdb dashboard
 
 ## Cleanup
 
 Once you're done with it, don't forget to nuke the whole thing::
 
-    ansible-playbook -e "action=destroy env=leap password=XXXXX" site.yml
+    ansible-playbook -e "action=destroy env=coreos password=XXXXX" site.yml
 
 The above command will destroy all the resources created.

@@ -17,4 +17,4 @@
     availability_zone: "{{ app_env.availability_zone }}"
     validate_certs: "{{ app_env.validate_certs }}"
     name: k8s_sg
-    description: secuirty group for lampstack
+    description: secuirty group for kubernetes cluster
