@@ -139,12 +139,23 @@
     - kubelet
     - kube-proxy
 
-- name: Load cockroachdb images
+- name: Get all container image tar files
   command: "{{ item }}"
   with_items:
-    - "wget -q -O /opt/bin/cockroachdb.tar.gz {{ app_env.cockroachdb_repo }}"
-    - "tar xf /opt/bin/cockroachdb.tar.gz -C /opt/bin"
-    - "docker load --input /opt/bin/cockroachdb.tar"
-  when: app_env.cockroachdb_repo != ""
-  no_log: True
+    - "mkdir -p /opt/bin/containerimages"
+    - "rm -f /opt/bin/containerimages/*"
+    - "wget -q -O /opt/bin/cimages.tar.gz {{ app_env.cimages_repo }}"
+    - "tar xf /opt/bin/cimages.tar.gz -C /opt/bin/containerimages"
+  when: app_env.cimages_repo != ""
 
+- name: List all the container images tar files
+  find:
+    paths: "/opt/bin/containerimages"
+    patterns: "*.tar"
+  when: app_env.cimages_repo != ""
+  register: tarfiles
+
+- name: Load container images
+  command: "docker load --input {{ item.path }}"
+  with_items: " {{ tarfiles.files }} "
+  when: app_env.cimages_repo != ""
