@@ -9,6 +9,11 @@
     service_path: "/lib/systemd/system/"
   when: app_env.target_os == "ubuntu"
 
+- name: Make sure that cloud-init script has completed
+  wait_for:
+    path: "/run/cloud-init/result.json"
+  when: app_env.target_os == "ubuntu"
+
 - name: Install Docker Engine
   apt:
     name: docker.io

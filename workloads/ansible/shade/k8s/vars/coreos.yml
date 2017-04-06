@@ -41,7 +41,7 @@ app_env: {
   dashboard_service_ip: "172.16.0.5",
 
   # The following section shows an example when use a local repo.
-  cockroachdb_repo: "http://10.0.10.12/cockroachdb.tar.gz",
+  cimages_repo: "http://10.0.10.12/cimages.tar.gz",
   flannel_repo: "http://10.0.10.12/flannel-v0.7.0-linux-amd64.tar.gz",
   k8s_repo: "http://10.0.10.12/v1.5.4/"
 }
