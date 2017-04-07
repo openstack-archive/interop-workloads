@@ -13,7 +13,7 @@ In process
 ## Requirements
 
 - [Install Ansible](http://docs.ansible.com/ansible/intro_installation.html)
-- [Install openstack shade] (http://docs.openstack.org/infra/shade/installation.html)
+- [Install openstack shade](http://docs.openstack.org/infra/shade/installation.html)
 - Make sure there is an Ubuntu cloud image available on your cloud.
 - Clone this project into a directory.
 
