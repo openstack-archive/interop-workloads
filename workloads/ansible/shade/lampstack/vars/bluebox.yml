@@ -21,6 +21,16 @@ app_env: {
   stack_size: 4,
   volume_size: 4,
   block_device_name: "/dev/vdb",
+
+  # The following section shows how to pre allocate floating IPs for each
+  # server. If you wish not to do that, leave them empty.
+  ips: {
+    apache-1: [],
+    apache-2: [],
+    balancer: [],
+    database: []
+  },
+
   wp_latest: "http://10.0.10.41/lampstack/wordpress-4.6.1.tar.gz",
   wp_importer: "http://10.0.10.41/lampstack/wordpress-importer.0.6.3.zip"
 }

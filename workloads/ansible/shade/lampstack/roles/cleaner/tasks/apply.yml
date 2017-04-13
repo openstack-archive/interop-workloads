@@ -6,7 +6,6 @@
     validate_certs: "{{ app_env.validate_certs }}"
     state: absent
     floating_ip_address: "{{ item }}"
-    purge: True
     server: "{{ hostvars[item].inter_name }}"
   with_flattened:
     - "{{ groups['webservers'] }}"

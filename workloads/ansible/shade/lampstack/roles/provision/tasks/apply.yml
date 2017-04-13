@@ -16,6 +16,8 @@
     config_drive: "{{ app_env.config_drive | default('no') }}"
     security_groups: lampstack_sg
     floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    floating_ips: "{{ app_env.ips[inventory_hostname] }}"
+    reuse_ips: False
     meta:
       hostname: "{{ inventory_hostname }}"
   register: osvm
