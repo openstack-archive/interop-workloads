@@ -40,7 +40,15 @@ app_env: {
   dns_service_ip: "172.16.0.4",
   dashboard_service_ip: "172.16.0.5",
 
+  app_setting: {
+    public_node: "",
+    own_cluster: True
+  },
+
   # The following section shows an example when use a remote repo.
+  # If you have exported some container images such as images that being used
+  # by this workload, you can place the url point to tar.gz file for
+  # cimages_repo
   cimages_repo: "",
   flannel_repo: "https://github.com/coreos/flannel/releases/download/v0.7.0/flannel-v0.7.0-linux-amd64.tar.gz",
   k8s_repo: "https://storage.googleapis.com/kubernetes-release/release/v1.5.3/bin/linux/amd64/"
