@@ -110,6 +110,19 @@
   environment: "{{ proxy_env }}"
   tags: "post"
 
+- name: Start up applications
+  hosts: cworkers, uworkers
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  roles:
+    - apps
+  environment: "{{ proxy_env }}"
+  tags: "apps"
+
 - name: Inform the installer
   hosts: cloud
   connection: local
