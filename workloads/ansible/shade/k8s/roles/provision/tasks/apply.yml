@@ -11,6 +11,12 @@
     tp_path: "roles/provision/templates/{{ app_env.target_os }}.j2"
   when: app_env.target_os == "ubuntu"
 
+- name: Setup variables
+  set_fact:
+    target_interpreter: "/usr/bin/python"
+    tp_path: "roles/provision/templates/{{ app_env.target_os }}.j2"
+  when: app_env.target_os == "centos"
+
 - name: Create an OpenStack virtual machine
   os_server:
     state: "present"

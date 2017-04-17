@@ -16,6 +16,13 @@
     mgroups: "umasters"
   when: app_env.target_os == "ubuntu"
 
+- name: Setup couple variables
+  set_fact:
+    target_interpreter: "/usr/bin/python"
+    wgroups: "cosworkers"
+    mgroups: "cosmasters"
+  when: app_env.target_os == "centos"
+
 - name: Retrieve specified flavor
   os_flavor_facts:
     auth: "{{ auth }}"
