@@ -1,5 +1,5 @@
 ---
-- name: Setup public and privte IP variables
+- name: Setup public and private IP variables
   set_fact:
     public_ip: "{{ ansible_host }}"
     private_ip: "{{ hostvars[ansible_host].inter_ip }}"
