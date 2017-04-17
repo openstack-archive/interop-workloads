@@ -13,6 +13,13 @@
     mgroups: "umasters"
   when: app_env.target_os == "ubuntu"
 
+- name: Setup node group name for centos
+  set_fact:
+    target_interpreter: "/usr/bin/python"
+    wgroups: "cosworkers"
+    mgroups: "cosmasters"
+  when: app_env.target_os == "centos"
+
 - name: Remove the runhost file
   file:
     path: "{{ playbook_dir }}/run/runhosts"

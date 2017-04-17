@@ -13,6 +13,13 @@
     mgroups: "umasters"
   when: app_env.target_os == "ubuntu"
 
+- name: Setup couple variables
+  set_fact:
+    target_interpreter: "/usr/bin/python"
+    wgroups: "cosworkers"
+    mgroups: "cosmasters"
+  when: app_env.target_os == "centos"
+
 - name: Add provisioning host group
   add_host:
     name: "worker-{{ item }}"

@@ -15,6 +15,14 @@
     service_path: "/lib/systemd/system/"
   when: app_env.target_os == "ubuntu"
 
+- name: Setup few variables for centos target
+  set_fact:
+    public_ip: "{{ groups['cosmasters'][0] }}"
+    private_ip: "{{ hostvars[groups['cosmasters'][0]].inter_ip }}"
+    this_ip: "{{ hostvars[ansible_host].inter_ip }}"
+    service_path: "/lib/systemd/system/"
+  when: app_env.target_os == "centos"
+
 - stat: path=/tmp/diskflag
   register: diskflag
 
