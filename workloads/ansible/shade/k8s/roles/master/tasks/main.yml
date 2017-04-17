@@ -20,6 +20,17 @@
     update_cache: no
   when: app_env.target_os == "ubuntu"
 
+- name: Setup service path variables for CentOS
+  set_fact:
+   service_path: "/lib/systemd/system"
+  when: app_env.target_os == "centos"
+
+- name: Install etcd
+  yum:
+    name: etcd
+    state: latest
+  when: app_env.target_os == "centos"
+
 - name: Download flannel package
   get_url:
     url: "{{ app_env.flannel_repo }}"
