@@ -55,7 +55,7 @@
   tags: "apply"
 
 - name: Install required packages for all nodes
-  hosts: cworkers, cmasters, uworkers, umasters
+  hosts: cworkers, cmasters, uworkers, umasters, cosworkers, cosmasters
   gather_facts: False
   user: "{{ app_env.ssh_user }}"
   become: true
@@ -69,7 +69,7 @@
   tags: "common"
 
 - name: Setup master
-  hosts: cmasters, umasters
+  hosts: cmasters, umasters, cosmasters
   gather_facts: true
   user: "{{ app_env.ssh_user }}"
   become: true
@@ -82,7 +82,7 @@
   tags: "master"
 
 - name: Setup workers
-  hosts: cworkers, cmasters, uworkers, umasters
+  hosts: cworkers, cmasters, uworkers, umasters, cosworkers, cosmasters
   gather_facts: true
   user: "{{ app_env.ssh_user }}"
   become: true
@@ -96,7 +96,7 @@
   tags: "worker"
 
 - name: Post configurations
-  hosts: cmasters, umasters
+  hosts: cmasters, umasters, cosmasters
   gather_facts: true
   user: "{{ app_env.ssh_user }}"
   become: true
@@ -124,6 +124,12 @@
           Access kubernetes dashboard at
           http://{{ groups['cmasters'][0] }}:30000
       when: groups['cmasters'] is defined
+    - debug:
+        msg: >-
+          Access kubernetes dashboard at
+          http://{{ groups['cosmasters'][0] }}:30000
+      when: groups['cosmasters'] is defined
+
     - debug:
         msg: >-
           The work load started at {{ hostvars.cloud.starttime.time }},

@@ -20,6 +20,36 @@
     update_cache: no
   when: app_env.target_os == "ubuntu"
 
+- name: Setup couple variables
+  set_fact:
+    service_path: "/lib/systemd/system/"
+  when: app_env.target_os == "centos"
+
+- name: Make sure that cloud-init script has completed
+  wait_for:
+    path: "/run/cloud-init/result.json"
+  when: app_env.target_os == "centos"
+
+- name: Install Docker Engine
+  yum:
+    name: docker
+    state: latest
+  when: app_env.target_os == "centos"
+
+- name: Apply workaround for Docker Bug in CentOS
+  file:
+    src: /usr/libexec/docker/docker-runc-current
+    dest: /usr/local/sbin/docker-runc
+    state: link
+  notify: restart docker
+  when: app_env.target_os == "centos"
+
+- name: Set SELinux to permissive
+  selinux:
+    policy: targeted
+    state: permissive
+  when: app_env.target_os == "centos"
+
 - name: Ensure config directories are present
   file:
     path: "{{ item }}"
