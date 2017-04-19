@@ -1,0 +1,27 @@
+---
+- name: name.conf
+  lineinfile:
+    dest: "/etc/bind/named.conf.local"
+    state: present
+    create: yes
+    line: 'zone "example.com" IN { type master; file "/etc/bind/db.example.com"; };'
+
+- name: db.example.com
+  template:
+    src: "roles/dnsserver/templates/ubuntu.j2"
+    dest: '/etc/bind/db.example.com'
+
+- name: update apt cache
+  apt: update_cache=yes
+  when: ansible_os_family == "Debian"
+
+- name: Install package
+  apt:
+    name: '{{ install_package }}'
+    update_cache: no
+    force: yes
+
+- name: restart bind9
+  service:
+    name: bind9
+    state: restarted

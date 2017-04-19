@@ -1,0 +1,253 @@
+
+---
+- name: Setup variables
+  set_fact:
+    target_interpreter: "python"
+    tp_path: "roles/provision/templates/{{ app_env.target_os }}.j2"
+  when: app_env.target_os == "ubuntu"
+
+- name: Create a key-pair
+  os_keypair:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: "clearwater"
+    public_key_file: "{{ app_env.public_key_file }}"
+
+- name: Create an OpenStack virtual machine for dns server
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'dnsserver'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'dnsserver'
+  register: dnsserver
+
+- name: Create an OpenStack virtual machine for ellis
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'ellis'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'ellis'
+  register: ellis
+
+- name: Create an OpenStack virtual machine for bono
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'bono'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'bono'
+  register: bono
+
+- name: Create an OpenStack virtual machine for sprout
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'sprout'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'sprout'
+  register: sprout
+
+- name: Create an OpenStack virtual machine for homer
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'homer'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'homer'
+  register: homer
+
+- name: Create an OpenStack virtual machine for homestead
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'homestead'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'homestead'
+  register: homestead
+
+- name: Create an OpenStack virtual machine for ralf
+  os_server:
+    state: "present"
+    auth: "{{ auth }}"
+    region_name: "{{ app_env.region_name }}"
+    availability_zone: "{{ app_env.availability_zone }}"
+    validate_certs: "{{ app_env.validate_certs }}"
+    name: 'ralf'
+    image: "{{ app_env.image_name }}"
+    key_name: "clearwater"
+    timeout: 200
+    flavor: "{{ app_env.flavor_name }}"
+    network: "{{ app_env.private_net_name }}"
+    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    userdata: "{{ lookup('template', tp_path) }}"
+    config_drive: "{{ app_env.config_drive | default('no') }}"
+    security_groups: default
+    meta:
+      hostname: 'ralf'
+  register: ralf
+
+- name: Setup All ip address
+  set_fact:
+    all_public_ip: "{{ ellis.openstack.accessIPv4 }},{{ bono.openstack.accessIPv4 }},{{ sprout.openstack.accessIPv4 }},{{ homer.openstack.accessIPv4 }},{{ homestead.openstack.accessIPv4 }},{{ ralf.openstack.accessIPv4 }}"
+
+- name: Add ellis to provisioning host group
+  add_host:
+    name: ellis
+    ansible_host: "{{ ellis.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "ellis"
+    install_package: "ellis-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add bono to provisioning host group
+  add_host:
+    name: bono
+    ansible_host: "{{ bono.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "bono"
+    install_package: "bono-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add provisioning host group
+  add_host:
+    name: sprout
+    ansible_host: "{{ sprout.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "sprout"
+    install_package: "sprout-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add provisioning host group
+  add_host:
+    name: homer
+    ansible_host: "{{ homer.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "homer"
+    install_package: "homer-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add provisioning host group
+  add_host:
+    name: homestead
+    ansible_host: "{{ homestead.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "homestead"
+    install_package: "homestead-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add provisioning host group
+  add_host:
+    name: ralf
+    ansible_host: "{{ ralf.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "ralf"
+    install_package: "ralf-node"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    groups: "prohosts"
+
+- name: Add provisioning host group
+  add_host:
+    name: dnsserver
+    ansible_host: "{{ dnsserver.openstack.accessIPv4 }}"
+    ansible_python_interpreter: "python"
+    all_public_ip: "{{ all_public_ip }}"
+    ansible_host_name: "dnsserver"
+    install_package: "bind9"
+    dns_server_ip: '{{ dnsserver.openstack.accessIPv4 }}'
+    ellis_ip: '{{ ellis.openstack.accessIPv4 }}'
+    bono_ip: '{{ bono.openstack.accessIPv4 }}'
+    sprout_ip: '{{ sprout.openstack.accessIPv4 }}'
+    homer_ip: '{{ homer.openstack.accessIPv4 }}'
+    homestead_ip: '{{ homestead.openstack.accessIPv4 }}'
+    ralf_ip: '{{ ralf.openstack.accessIPv4 }}'
+    groups: "dnsserver"
+
+

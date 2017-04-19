@@ -1,0 +1,68 @@
+---
+- name: Get start timestamp
+  hosts: cloud
+  connection: local
+  tasks:
+    - set_fact:
+        starttime: "{{ ansible_date_time }}"
+  tags: "info"
+
+- name: Prepare to run the workload
+  hosts: cloud
+  connection: local
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/prepare/tasks/{{ action }}.yml"
+  roles:
+    - prepare
+  tags: "{{ action }}"
+
+- name: provision servers
+  hosts: cloud
+  connection: local
+  gather_facts: true
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/provision/tasks/{{ action }}.yml"
+  roles:
+    - provision
+  tags: "{{ action }}"
+
+- name: setup dns server
+  hosts: dnsserver
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  roles:
+    - dnsserver
+  tags: "dnsserver"
+
+- name: Install clearwaters software
+  hosts: prohosts
+  gather_facts: true
+  user: "{{ app_env.ssh_user }}"
+  become: true
+  become_user: root
+  vars_files:
+    - "vars/{{ env }}.yml"
+  tasks:
+    - include: "roles/postprovision/tasks/{{ action }}.yml"
+  roles:
+    - provision
+  tags: "{{ action }}"
+
+
+- name: Inform the installer
+  hosts: cloud
+  connection: local
+  tasks:
+    - debug:
+        msg: >-
+          The work load test started at {{ hostvars.cloud.starttime.time }},
+          ended at {{ ansible_date_time.time }}
+  tags: "info"

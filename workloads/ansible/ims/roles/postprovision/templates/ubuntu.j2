@@ -1,0 +1,14 @@
+[http]
+bind-address = {{ ansible_host }}
+bind-port = 7253
+threads = 50
+
+[logging]
+folder = /var/log/chronos
+level = 2
+
+[alarms]
+enabled = true
+
+[exceptions]
+max_ttl = 600

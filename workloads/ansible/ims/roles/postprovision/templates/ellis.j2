@@ -1,0 +1,21 @@
+upstream http_ellis {
+        server unix:/tmp/.ellis-sock;
+        # The minimum number of idle connections to keep alive to the upstream.
+        keepalive 16;
+}
+server {
+        listen       [::]:80 default_server; # ipv6only=off is set in the base config
+        server_name  ellis.example.com 127.0.0.1;
+
+        location / {
+                proxy_pass http://http_ellis;
+                proxy_http_version 1.1;
+
+                # The client may have instructed the server to close the
+                # connection - do not forward this upstream.
+                proxy_set_header Connection "";
+
+                # Preserve the Ellis hostname.
+                proxy_set_header Host ellis.example.com;
+        }
+}

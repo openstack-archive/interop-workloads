@@ -1,0 +1,23 @@
+---
+
+auth: {
+  auth_url: "http://xxx.xxx.xxx.xxx:5000/v3.0",
+  username: "demo",
+  password: "{{ password }}",
+  domain_name: "default",
+  project_name: "demo"
+}
+
+app_env: {
+  target_os: "ubuntu",
+  image_name: "ubuntu-14.04",
+  region_name: "RegionOne",
+  availability_zone: "nova",
+  validate_certs: False,
+  ssh_user: "ubuntu",
+  private_net_name: "my_tenant_net",
+  public_key_file: "/home/ubuntu/.ssh/id_rsa.pub",
+  flavor_name: "m1.small",
+  clearwater_repo: "deb http://repo.cw-ngv.com/archive/repo117 binary/",
+  clearwater_key: "http://repo.cw-ngv.com/repo_key"
+}

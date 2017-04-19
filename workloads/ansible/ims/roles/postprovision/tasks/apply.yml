@@ -1,0 +1,113 @@
+---
+- name: Add ClearWater repo to Source List
+  apt_repository:
+    repo: '{{ app_env.clearwater_repo }}'
+    state: present
+    filename: clearwater
+
+- name: Add Clearwater Key
+  apt_key:
+    url: '{{ app_env.clearwater_key }}'
+    state: present
+
+- name: update apt cache
+  apt: update_cache=yes
+  when: ansible_os_family == "Debian"
+
+- name: local_config
+  lineinfile:
+    dest: /etc/clearwater/local_config
+    state: present
+    create: yes
+    line: '{{ item }}'
+  with_items:
+    - 'local_ip={{ ansible_host }}'
+    - 'public_ip={{ ansible_host }}'
+    - 'public_hostname={{ ansible_host_name }}'
+    - 'etcd_cluster={{ all_public_ip }}'
+
+- name: Ensure config directories are present
+  file:
+    path: "/etc/chronos/"
+    state: directory
+  when: ansible_host_name == 'sprout' or ansible_host_name == 'ralf'
+
+- name: chronos.conf
+  template:
+    src: "roles/postprovision/templates/ubuntu.j2"
+    dest: /etc/chronos/chronos.conf
+    force: yes
+  when: ansible_host_name == 'sprout' or ansible_host_name == 'ralf'
+
+- name: Install package
+  apt:
+    name: '{{ install_package }}'
+    update_cache: no
+    force: yes
+
+- name: Install clearwater-management
+  apt:
+    name: clearwater-management
+    update_cache: no
+    force: yes
+
+- name: Install dns-client
+  apt:
+    name: dnsmasq
+    update_cache: no
+    force: yes
+
+- name: dnsmasq.resolv.config
+  lineinfile:
+    dest: /etc/dnsmasq.resolv.conf
+    state: present
+    create: yes
+    line: 'nameserver {{ dns_server_ip }}'
+
+- name: dnsmasq config
+  lineinfile:
+    dest: /etc/default/dnsmasq
+    state: present
+    create: yes
+    line: "RESOLV_CONF=/etc/dnsmasq.resolv.conf"
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+
+- name: add shared config
+  template:
+    src: "roles/postprovision/templates/shared_config.j2"
+    dest: /etc/clearwater/shared_config
+    force: yes
+  when: ansible_host_name == 'ellis'
+
+- name: share file with etcd
+  shell: cw-upload_shared_config
+  when: ansible_host_name == 'ellis'
+
+- name: local_settings.j2 in ellis
+  template:
+    src: "roles/postprovision/templates/local_settings.j2"
+    dest: /usr/share/clearwater/ellis/env/lib/python2.7/site-packages/ellis-0.1-py2.7.egg/metaswitch/ellis/local_settings.py
+    force: yes
+  when: ansible_host_name == 'ellis'
+
+- name: nginx config on ellis
+  template:
+    src: "roles/postprovision/templates/ellis.j2"
+    dest: /etc/nginx/sites-enabled/ellis
+  when: ansible_host_name == 'ellis'
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+  when: ansible_host_name == 'ellis'
+
+- name: Create 1000 numbers for testing
+  shell: |
+    export PATH=/usr/share/clearwater/ellis/env/bin:$PATH;
+    python /usr/share/clearwater/ellis/src/metaswitch/ellis/tools/create_numbers.py --start 6505550000 --count 1000
+  when: ansible_host_name == 'ellis'
