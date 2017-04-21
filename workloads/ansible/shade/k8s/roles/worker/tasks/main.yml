@@ -18,6 +18,9 @@
 - stat: path=/tmp/diskflag
   register: diskflag
 
+- shell: for adapter in $(echo `find /sys/class/scsi_host -name "host*"`); do echo "- - -" > ${adapter}/scan; done
+  when: diskflag.stat.exists == false
+
 - shell: parted -s "{{ app_env.block_device_name }}" mklabel msdos
   when: diskflag.stat.exists == false
 
