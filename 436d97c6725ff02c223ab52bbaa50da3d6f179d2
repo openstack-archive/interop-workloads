@@ -1,0 +1,9 @@
+Code-Review+1: litong01 <email4tong@yahoo.com>
+Code-Review+2: Zhipeng Huang <huangzhipeng@huawei.com>
+Workflow+1: Zhipeng Huang <huangzhipeng@huawei.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 25 Apr 2017 03:37:52 +0000
+Reviewed-on: https://review.openstack.org/439492
+Project: openstack/interop-workloads
+Branch: refs/heads/master
