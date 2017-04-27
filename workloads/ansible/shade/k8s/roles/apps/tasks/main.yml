@@ -1,0 +1,42 @@
+---
+- name: Setup few variables for coreos target
+  set_fact:
+    master_ip: "{{ groups['cmasters'][0] }}"
+    public_ip: "{{ ansible_host }}"
+  when: app_env.target_os == "coreos"
+
+- name: Setup few variables for ubuntu target
+  set_fact:
+    master_ip: "{{ groups['umasters'][0] }}"
+    public_ip: "{{ ansible_host }}"
+  when: app_env.target_os == "ubuntu"
+
+- name: Setup private IP variable for master node
+  set_fact:
+    private_ip: "{{ hostvars[master_ip].inter_ip }}"
+
+- name: Setup first node IP when stand alone
+  set_fact:
+    first_node_ip: "{{ master_ip }}"
+  when: app_env.app_setting.own_cluster == True
+
+- name: Setup first node IP when join others
+  set_fact:
+    first_node_ip: "{{ app_env.app_setting.public_node }}"
+  when: app_env.app_setting.own_cluster == False
+
+- name: Upload app configuration files
+  template:
+    src: "roles/apps/templates/{{ item }}.j2"
+    dest: "/etc/kubernetes/{{ item }}.yaml"
+    mode: 0644
+  with_items:
+    - cockroachdb-pod
+
+- name: Create the app pod
+  command: >-
+    /opt/bin/kubectl --server="{{ private_ip }}:8080" create
+    -f "/etc/kubernetes/{{ item }}.yaml"
+  with_items:
+    - cockroachdb-pod
+

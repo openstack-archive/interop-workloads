@@ -12,7 +12,7 @@
   with_items:
     - dnscontroller
     - dashboard
-    - cockroachdb
+    - cockroachdb-init-pod
 
 - name: Label the master node
   command: >-
@@ -26,5 +26,9 @@
   with_items:
     - dnscontroller
     - dashboard
-    - cockroachdb
 
+- name: Setup first cockroachdb node
+  command: >-
+    /opt/bin/kubectl --server={{ private_ip }}:8080 create
+    -f /etc/kubernetes/cockroachdb-init-pod.yaml
+  when: app_env.app_setting.own_cluster == True

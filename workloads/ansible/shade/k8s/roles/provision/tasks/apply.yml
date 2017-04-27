@@ -25,6 +25,7 @@
     flavor: "{{ app_env.flavor_name }}"
     network: "{{ app_env.private_net_name }}"
     floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
+    floating_ips: "{{ app_env.app_setting.ips[inventory_hostname] }}"
     reuse_ips: False
     userdata: "{{ lookup('template', tp_path) }}"
     config_drive: "{{ app_env.config_drive | default('no') }}"

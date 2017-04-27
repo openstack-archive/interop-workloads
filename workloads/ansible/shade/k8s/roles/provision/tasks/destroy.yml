@@ -1,5 +1,9 @@
 ---
 
+- name: Setup release floating IP flag
+  set_fact:
+    ip_flag: "{{ app_env.app_setting.ips[inventory_hostname] == '' }}"
+
 - name: Destroy the OpenStack VM
   os_server:
     state: "absent"
@@ -9,7 +13,7 @@
     validate_certs: "{{ app_env.validate_certs }}"
     name: "{{ inventory_hostname }}"
     image: "{{ app_env.image_name }}"
-    delete_fip: True
+    delete_fip: "{{ ip_flag }}"
     key_name: "k8s"
     timeout: 200
     network: "{{ app_env.private_net_name }}"
