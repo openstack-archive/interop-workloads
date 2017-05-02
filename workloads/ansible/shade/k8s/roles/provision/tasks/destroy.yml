@@ -2,7 +2,7 @@
 
 - name: Setup release floating IP flag
   set_fact:
-    ip_flag: "{{ app_env.app_setting.ips[inventory_hostname] == '' }}"
+    ip_flag: "{{ app_env.app_setting.ips[inventory_hostname]|length == 0 }}"
 
 - name: Destroy the OpenStack VM
   os_server:
