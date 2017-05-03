@@ -1,0 +1,10 @@
+Code-Review+2: Daniel Mellado <dmellado@redhat.com>
+Code-Review+1: Victoria Martinez de la Cruz <victoria@redhat.com>
+Code-Review+2: litong01 <email4tong@yahoo.com>
+Workflow+1: litong01 <email4tong@yahoo.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 03 May 2017 02:54:29 +0000
+Reviewed-on: https://review.openstack.org/459557
+Project: openstack/interop-workloads
+Branch: refs/heads/master
