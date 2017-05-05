@@ -9,7 +9,7 @@ spec:
   restartPolicy: Always
   containers:
   - name: cockroachdb
-    image: cockroachdb/cockroach
+    image: cockroachdb/cockroach:interop-demo
     imagePullPolicy: IfNotPresent
     ports:
     - containerPort: 26257
