@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: cockroachdb-{{ inter_name }}
+  name: cockroachdb-{{ env.lower() }}-{{ inter_name }}
   labels:
     app: cockroachdb
 spec:
@@ -9,7 +9,7 @@ spec:
   restartPolicy: Always
   containers:
   - name: cockroachdb
-    image: cockroachdb/cockroach
+    image: cockroachdb/cockroach:interop-demo
     imagePullPolicy: IfNotPresent
     ports:
     - containerPort: 26257
