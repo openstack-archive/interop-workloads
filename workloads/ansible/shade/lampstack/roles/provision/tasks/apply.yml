@@ -11,13 +11,10 @@
     key_name: "lampstack"
     timeout: 200
     flavor: "{{ app_env.flavor_name }}"
-    network: "{{ app_env.private_net_name }}"
     userdata: "{{ lookup('template', 'roles/provision/templates/userdata.j2') }}"
     config_drive: "{{ app_env.config_drive | default('no') }}"
     security_groups: lampstack_sg
-    floating_ip_pools: "{{ app_env.public_net_name | default(omit) }}"
-    floating_ips: "{{ app_env.ips[inventory_hostname] }}"
-    reuse_ips: False
+    auto_ip: true
     meta:
       hostname: "{{ inventory_hostname }}"
   register: osvm
