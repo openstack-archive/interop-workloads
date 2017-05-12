@@ -22,18 +22,13 @@
 - name: Setup variables for generating host groups
   set_fact:
     inter_name: "{{ osvm.openstack.name }}"
-    public_ip: "{{ osvm.openstack.public_v4 }}"
+    public_ip: "{{ osvm.openstack.interface_ip }}"
     private_ip: "{{ osvm.openstack.private_v4 }}"
 
 - name: Use public ip address when private ip is empty
   set_fact:
     private_ip: "{{ osvm.openstack.public_v4 }}"
   when: osvm.openstack.private_v4 == ""
-
-- name: Use private ip address when public ip is empty
-  set_fact:
-    public_ip: "{{ osvm.openstack.private_v4 }}"
-  when: osvm.openstack.public_v4 == ""
 
 - name: Attach a volume to the node
   os_server_volume:
